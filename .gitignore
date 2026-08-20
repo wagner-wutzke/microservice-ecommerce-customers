@@ -1,0 +1,3 @@
+/target/**
+/data/customers-db.mv.db
+/.idea/

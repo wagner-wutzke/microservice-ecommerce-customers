@@ -1,0 +1,16 @@
+# The project name
+project_name = "customers-service"
+
+# The root package path (e.g., net.wowdev.microservices.products)
+package_name = "net.wowdev.ecommerce.cutomers"
+
+# The Capitalized noun for the entity (e.g., Product)
+domain_object = "Customer"
+
+# The Kafka publishing topic name (e.g., product-change-topic)
+kafka_pub_topic = "customer-change-topic"
+
+kafka_bootstrap_servers = "localhost:9092"
+
+# The application server port (e.g., 9000)
+app_port = 9200
