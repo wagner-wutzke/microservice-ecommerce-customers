@@ -1,10 +1,14 @@
 package net.wowdev.ecommerce.cutomers.service;
 
+import lombok.RequiredArgsConstructor;
+import net.wowdev.ecommerce.cutomers.messaging.CustomerProducer;
 import net.wowdev.ecommerce.cutomers.repository.CustomerRepository;
 import net.wowdev.ecommerce.domain.dto.CustomerDTO;
 import net.wowdev.ecommerce.domain.entity.CustomerEntity;
+import net.wowdev.ecommerce.domain.events.CustomerDataFailedEvent;
+import net.wowdev.ecommerce.domain.events.CustomerDataLoadedEvent;
+import net.wowdev.ecommerce.domain.events.OrderProcessingStartedEvent;
 import net.wowdev.ecommerce.domain.mapper.CustomerMapper;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -12,17 +16,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class DefaultCustomerService implements CustomerService {
-    private final CustomerRepository repository;
-    private final ApplicationEventPublisher eventsPublisher;
 
-    public DefaultCustomerService(final CustomerRepository repository, final ApplicationEventPublisher eventsPublisher) {
-        this.repository = repository;
-        this.eventsPublisher = eventsPublisher;
-    }
+    private final CustomerRepository repository;
+
+    private final CustomerProducer customerProducer;
 
     @Override
     @Transactional(readOnly = true)
@@ -45,9 +49,7 @@ public class DefaultCustomerService implements CustomerService {
         entity.setId(UUID.randomUUID());
         entity.setCreatedAt(now);
         entity.setModifiedAt(now);
-        final CustomerDTO result = CustomerMapper.toDto(repository.save(entity));
-        eventsPublisher.publishEvent(result);
-        return result;
+        return CustomerMapper.toDto(repository.save(entity));
     }
 
     @Override
@@ -65,9 +67,7 @@ public class DefaultCustomerService implements CustomerService {
         entity.setPostalCode(customer.getPostalCode());
         entity.setStateProvince(customer.getStateProvince());
         entity.setModifiedAt(Instant.now());
-        final CustomerDTO result = CustomerMapper.toDto(repository.save(entity));
-        eventsPublisher.publishEvent(result);
-        return result;
+        return CustomerMapper.toDto(repository.save(entity));
     }
 
     @Override
@@ -75,5 +75,26 @@ public class DefaultCustomerService implements CustomerService {
     public void delete(final UUID id) {
         if (!repository.existsById(id)) throw new CustomerNotFoundException(id);
         repository.deleteById(id);
+    }
+
+    @Override
+    public void notifyLoadDataSucceeded(OrderProcessingStartedEvent event, CustomerDTO customerDTO) {
+        CustomerDataLoadedEvent customerDataLoadedEvent = new CustomerDataLoadedEvent(
+                UUID.randomUUID(),
+                event.transactionId(),
+                customerDTO,
+                LocalDateTime.now().toInstant(ZoneOffset.UTC));
+        customerProducer.publish(customerDataLoadedEvent);
+    }
+
+    @Override
+    public void notifyLoadDataFailed(OrderProcessingStartedEvent event, CustomerDTO customerDTO, String reason) {
+        customerProducer.publish(new CustomerDataFailedEvent(
+                UUID.randomUUID(),
+                event.transactionId(),
+                null,
+                reason,
+                LocalDateTime.now().toInstant(ZoneOffset.UTC)
+        ));
     }
 }

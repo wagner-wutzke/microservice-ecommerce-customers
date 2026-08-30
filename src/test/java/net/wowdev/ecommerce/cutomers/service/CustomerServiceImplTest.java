@@ -1,15 +1,19 @@
 package net.wowdev.ecommerce.cutomers.service;
 
 import net.wowdev.ecommerce.cutomers.repository.CustomerRepository;
+import net.wowdev.ecommerce.cutomers.messaging.CustomerProducer;
 import net.wowdev.ecommerce.domain.dto.CustomerDTO;
 import net.wowdev.ecommerce.domain.entity.CustomerEntity;
 import net.wowdev.ecommerce.domain.enums.CustomerStatus;
+import net.wowdev.ecommerce.domain.dto.OrderDTO;
+import net.wowdev.ecommerce.domain.events.CustomerDataFailedEvent;
+import net.wowdev.ecommerce.domain.events.CustomerDataLoadedEvent;
+import net.wowdev.ecommerce.domain.events.OrderProcessingStartedEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
@@ -26,7 +30,7 @@ class CustomerServiceImplTest {
     @Mock
     CustomerRepository repository;
     @Mock
-    ApplicationEventPublisher events;
+    CustomerProducer customerProducer;
     @InjectMocks
     DefaultCustomerService service;
 
@@ -66,7 +70,19 @@ class CustomerServiceImplTest {
         when(repository.findById(saved.getId())).thenReturn(Optional.of(saved));
         final CustomerDTO updated = service.update(saved.getId(), input);
         assertEquals(saved.getId(), updated.getId());
-        verify(events, times(2)).publishEvent(any(CustomerDTO.class));
+    }
+
+    @Test
+    void notifiesCustomerDataLoadedAndFailed() {
+        final OrderProcessingStartedEvent event = new OrderProcessingStartedEvent(
+                UUID.randomUUID(), "TX_ID", new OrderDTO(), java.time.Instant.now());
+        final CustomerDTO customer = dto();
+
+        service.notifyLoadDataSucceeded(event, customer);
+        service.notifyLoadDataFailed(event, null, "not found");
+
+        verify(customerProducer).publish(any(CustomerDataLoadedEvent.class));
+        verify(customerProducer).publish(any(CustomerDataFailedEvent.class));
     }
 
     @Test

@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.wowdev.ecommerce.cutomers.service.CustomerService;
 import net.wowdev.ecommerce.domain.dto.CustomerDTO;
-import net.wowdev.ecommerce.domain.events.CustomerDataLoadedEvent;
 import net.wowdev.ecommerce.domain.events.OrderProcessingStartedEvent;
 import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -24,26 +23,20 @@ import java.util.UUID;
 @AllArgsConstructor
 public class CustomerConsumer {
 
-    final private CustomerService customerService;
-    final private CustomerProducer customerProducer;
+    private final CustomerService customerService;
 
     @KafkaHandler
     public void handleOrderCreated(OrderProcessingStartedEvent event) {
-        log.info(">>>> Processing OrderProcessingStartedEvent: {}", event);
+        log.debug(">>>> Processing OrderProcessingStartedEvent: {}", event);
         UUID customerId = event.orderDTO().getCustomerId();
         try {
             CustomerDTO customerDTO = customerService.findById(customerId);
-            log.info(">>>> Loaded CustomerDTO: {}", customerDTO);
+            log.debug(">>>> Loaded CustomerDTO: {}", customerDTO);
+            customerService.notifyLoadDataSucceeded(event, customerDTO);
 
-            CustomerDataLoadedEvent customerDataLoadedEvent = new CustomerDataLoadedEvent(
-                    UUID.randomUUID(),
-                    event.transactionId(),
-                    customerDTO,
-                    LocalDateTime.now().toInstant(ZoneOffset.UTC));
-
-            customerProducer.publish(customerDataLoadedEvent);
         } catch (Exception e) {
-            log.error(">>>> Processing OrderProcessingStartedEvent failed: {}", e.getMessage());
+            log.error(">>>> Failed loading CustomerDTO: {}", e.getMessage());
+            customerService.notifyLoadDataFailed(event, null, e.getMessage());
         }
     }
 }

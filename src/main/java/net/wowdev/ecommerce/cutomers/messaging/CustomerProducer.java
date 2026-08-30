@@ -1,6 +1,7 @@
 package net.wowdev.ecommerce.cutomers.messaging;
 
 import lombok.extern.slf4j.Slf4j;
+import net.wowdev.ecommerce.domain.events.CustomerDataFailedEvent;
 import net.wowdev.ecommerce.domain.events.CustomerDataLoadedEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -26,6 +27,12 @@ public class CustomerProducer {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void publish(final CustomerDataLoadedEvent event) {
         log.info(">>>> Publishing CustomerDataLoadedEvent: {}", event);
+        template.send(customerEventsTopic, event.eventId().toString(), event);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void publish(final CustomerDataFailedEvent event) {
+        log.info(">>>> Publishing CustomerDataFailedEvent: {}", event);
         template.send(customerEventsTopic, event.eventId().toString(), event);
     }
 }
