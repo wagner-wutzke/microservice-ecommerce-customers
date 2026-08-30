@@ -1,75 +1,73 @@
--- Seed only an empty customer database. H2 has no conditional TRUNCATE syntax;
--- this guarded delete preserves existing addresses when customers already exist.
-DELETE FROM addresses WHERE NOT EXISTS (SELECT 1 FROM customers);
-
-INSERT INTO addresses (id, customer_id, address_line_1, address_line_2, city, state_province, postal_code, country, created_at, modified_at)
-SELECT CAST(v.id AS UUID), CAST(v.customer_id AS UUID), v.line_1, v.line_2, v.city, v.state_province, v.postal_code, v.country, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+-- CustomerEntity stores the address fields on customers (there is no separate
+-- address table in the current domain contract). Seed only an empty table.
+--
+-- The requested pattern ends with %07d, which produces an invalid 8-character
+-- UUID segment. The final segment is therefore zero-padded to 12 characters
+-- so the generated IDs remain valid UUIDs while retaining the requested 5...
+-- structure in every segment.
+-- PaymentMethodEntity stores customer_id as a UUID without a separate address
+-- relationship, so payment methods are inserted first and reference the IDs
+-- in the customer batch below.
+INSERT INTO payment_methods (
+    id, customer_id, card_number, owner_name, expiration, cvv, card_name,
+    created_at, modified_at
+)
+SELECT
+    CAST(v.id AS UUID), CAST(v.customer_id AS UUID), v.card_number, v.owner_name,
+    v.expiration, v.cvv, v.card_name, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM (VALUES
- ('00000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','14 Lantern Walk','North Wing','Portland','Oregon','97205','USA'),
- ('00000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000001','88 Paperbark Lane','Suite 4','Melbourne','Victoria','3000','Australia'),
- ('00000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000002','7 Copper Finch Road','Flat 2','Bristol','Somerset','BS1 4QA','UK'),
- ('00000000-0000-0000-0000-000000000004','10000000-0000-0000-0000-000000000002','221 Cloudberry Street','Unit 8','Reykjavik','Capital Region','101','Iceland'),
- ('00000000-0000-0000-0000-000000000005','10000000-0000-0000-0000-000000000003','53 Juniper Avenue','House B','Wellington','Wellington','6011','New Zealand'),
- ('00000000-0000-0000-0000-000000000006','10000000-0000-0000-0000-000000000003','19 Saffron Crescent','Floor 3','Dublin','Leinster','D02 X285','Ireland'),
- ('00000000-0000-0000-0000-000000000007','10000000-0000-0000-0000-000000000004','402 Blue Heron Way','Apt 11','Austin','Texas','78701','USA'),
- ('00000000-0000-0000-0000-000000000008','10000000-0000-0000-0000-000000000004','6 Wisteria Mews','Rear Cottage','Bath','Somerset','BA1 2NB','UK'),
- ('00000000-0000-0000-0000-000000000009','10000000-0000-0000-0000-000000000005','73 Ember Street','Suite 10','Oslo','Oslo','0150','Norway'),
- ('00000000-0000-0000-0000-00000000000a','10000000-0000-0000-0000-000000000005','9 Mossy Oak Drive','Unit 5','Atlanta','Georgia','30303','USA'),
- ('00000000-0000-0000-0000-00000000000b','10000000-0000-0000-0000-000000000006','145 Silver Birch Road','Level 2','Toronto','Ontario','M5V 2T6','Canada'),
- ('00000000-0000-0000-0000-00000000000c','10000000-0000-0000-0000-000000000006','31 Lavender Quay','Dock House','Cork','Munster','T12 K2P8','Ireland'),
- ('00000000-0000-0000-0000-00000000000d','10000000-0000-0000-0000-000000000007','84 Starling Boulevard','Apt 4C','Chicago','Illinois','60601','USA'),
- ('00000000-0000-0000-0000-00000000000e','10000000-0000-0000-0000-000000000007','12 Rowan Terrace','Garden Level','Edinburgh','Scotland','EH1 1AA','UK'),
- ('00000000-0000-0000-0000-00000000000f','10000000-0000-0000-0000-000000000008','67 Glasswing Lane','Unit 9','Vancouver','British Columbia','V6B 1A1','Canada'),
- ('00000000-0000-0000-0000-000000000010','10000000-0000-0000-0000-000000000008','28 Wildflower Court','House 6','Denver','Colorado','80202','USA'),
- ('00000000-0000-0000-0000-000000000011','10000000-0000-0000-0000-000000000009','5 Moonstone Parade','Flat 1','Sydney','New South Wales','2000','Australia'),
- ('00000000-0000-0000-0000-000000000012','10000000-0000-0000-0000-000000000009','90 Hazelwood Park','Building C','Manchester','Lancashire','M1 1AE','UK'),
- ('00000000-0000-0000-0000-000000000013','10000000-0000-0000-0000-00000000000a','16 Cinder Lane','Apt 12','Helsinki','Uusimaa','00100','Finland'),
- ('00000000-0000-0000-0000-000000000014','10000000-0000-0000-0000-00000000000a','304 Velvet Pine Street','Suite 7','San Diego','California','92101','USA'),
- ('00000000-0000-0000-0000-000000000015','10000000-0000-0000-0000-00000000000b','41 Tumbleweed Road','Unit 3','Phoenix','Arizona','85004','USA'),
- ('00000000-0000-0000-0000-000000000016','10000000-0000-0000-0000-00000000000b','8 Orchard Bell Close','House A','Leeds','Yorkshire','LS1 2AB','UK'),
- ('00000000-0000-0000-0000-000000000017','10000000-0000-0000-0000-00000000000c','59 Coral Fern Avenue','Level 1','Brisbane','Queensland','4000','Australia'),
- ('00000000-0000-0000-0000-000000000018','10000000-0000-0000-0000-00000000000c','117 Alder Street','Suite 2','Montreal','Quebec','H2Y 1C6','Canada'),
- ('00000000-0000-0000-0000-000000000019','10000000-0000-0000-0000-00000000000d','3 Nightingale Row','Flat 5','Glasgow','Scotland','G1 1XW','UK'),
- ('00000000-0000-0000-0000-00000000001a','10000000-0000-0000-0000-00000000000d','76 Willowglass Road','Apt 14','Seattle','Washington','98101','USA'),
- ('00000000-0000-0000-0000-00000000001b','10000000-0000-0000-0000-00000000000e','22 Kestrel Grove','Unit 2','Christchurch','Canterbury','8011','New Zealand'),
- ('00000000-0000-0000-0000-00000000001c','10000000-0000-0000-0000-00000000000e','101 Marigold Street','Floor 4','Adelaide','South Australia','5000','Australia'),
- ('00000000-0000-0000-0000-00000000001d','10000000-0000-0000-0000-00000000000f','48 Fable Crescent','House 9','Cardiff','Wales','CF10 1EP','UK'),
- ('00000000-0000-0000-0000-00000000001e','10000000-0000-0000-0000-00000000000f','11 Opal Crossing','Suite 1','Zurich','Zurich','8001','Switzerland'),
- ('00000000-0000-0000-0000-00000000001f','10000000-0000-0000-0000-000000000010','63 Birch Lantern Way','Apt 6','Boston','Massachusetts','02108','USA'),
- ('00000000-0000-0000-0000-000000000020','10000000-0000-0000-0000-000000000010','4 Pomegranate Street','Unit 12','Lisbon','Lisbon','1100-001','Portugal'),
- ('00000000-0000-0000-0000-000000000021','10000000-0000-0000-0000-000000000011','39 Indigo Vale','House 3','Auckland','Auckland','1010','New Zealand'),
- ('00000000-0000-0000-0000-000000000022','10000000-0000-0000-0000-000000000011','15 Lanternfish Road','Flat 7','Belfast','Ulster','BT1 1AA','UK'),
- ('00000000-0000-0000-0000-000000000023','10000000-0000-0000-0000-000000000012','82 Meadowlark Drive','Suite 5','Nashville','Tennessee','37219','USA'),
- ('00000000-0000-0000-0000-000000000024','10000000-0000-0000-0000-000000000012','6 Eucalyptus Place','Apt 2','Perth','Western Australia','6000','Australia'),
- ('00000000-0000-0000-0000-000000000025','10000000-0000-0000-0000-000000000013','27 Fuchsia Lane','Unit 4','Copenhagen','Capital','1050','Denmark'),
- ('00000000-0000-0000-0000-000000000026','10000000-0000-0000-0000-000000000013','93 Hearthstone Boulevard','Floor 2','Prague','Prague','110 00','Czechia'),
- ('00000000-0000-0000-0000-000000000027','10000000-0000-0000-0000-000000000014','18 Seafoam Court','House 8','San Francisco','California','94105','USA'),
- ('00000000-0000-0000-0000-000000000028','10000000-0000-0000-0000-000000000014','70 Foxglove Crescent','Suite 6','Cape Town','Western Cape','8001','South Africa')
-) v(id, customer_id, line_1, line_2, city, state_province, postal_code, country)
+    ('60000001-6001-6001-6001-600000000001', '50000001-5001-5001-5001-500000000001', '4111111111111001', 'Ana Almeida', '12/28', 101, 'Visa'),
+    ('60000002-6002-6002-6002-600000000002', '50000002-5002-5002-5002-500000000002', '4111111111111002', 'Bruno Barbosa', '01/29', 102, 'Visa'),
+    ('60000003-6003-6003-6003-600000000003', '50000003-5003-5003-5003-500000000003', '5555555555551003', 'Carla Cardoso', '02/29', 203, 'Mastercard'),
+    ('60000004-6004-6004-6004-600000000004', '50000004-5004-5004-5004-500000000004', '5555555555551004', 'Diego Dias', '03/29', 204, 'Mastercard'),
+    ('60000005-6005-6005-6005-600000000005', '50000005-5005-5005-5005-500000000005', '378282246310005', 'Elisa Esteves', '04/29', 305, 'American Express'),
+    ('60000006-6006-6006-6006-600000000006', '50000006-5006-5006-5006-500000000006', '378282246310006', 'Felipe Ferreira', '05/29', 306, 'American Express'),
+    ('60000007-6007-6007-6007-600000000007', '50000007-5007-5007-5007-500000000007', '4111111111111007', 'Gabriela Gomes', '06/29', 407, 'Visa'),
+    ('60000008-6008-6008-6008-600000000008', '50000008-5008-5008-5008-500000000008', '4111111111111008', 'Heitor Henrique', '07/29', 408, 'Visa'),
+    ('60000009-6009-6009-6009-600000000009', '50000009-5009-5009-5009-500000000009', '5555555555551009', 'Isabela Ibrahim', '08/29', 509, 'Mastercard'),
+    ('60000010-6010-6010-6010-600000000010', '50000010-5010-5010-5010-500000000010', '5555555555551010', 'João Jardim', '09/29', 510, 'Mastercard'),
+    ('60000011-6011-6011-6011-600000000011', '50000011-5011-5011-5011-500000000011', '4111111111111011', 'Karina Klein', '10/29', 611, 'Visa'),
+    ('60000012-6012-6012-6012-600000000012', '50000012-5012-5012-5012-500000000012', '4111111111111012', 'Lucas Lopes', '11/29', 612, 'Visa'),
+    ('60000013-6013-6013-6013-600000000013', '50000013-5013-5013-5013-500000000013', '5555555555551013', 'Marina Martins', '12/29', 713, 'Mastercard'),
+    ('60000014-6014-6014-6014-600000000014', '50000014-5014-5014-5014-500000000014', '5555555555551014', 'Nicolas Nogueira', '01/30', 714, 'Mastercard'),
+    ('60000015-6015-6015-6015-600000000015', '50000015-5015-5015-5015-500000000015', '4111111111111015', 'Olivia Oliveira', '02/30', 815, 'Visa'),
+    ('60000016-6016-6016-6016-600000000016', '50000016-5016-5016-5016-500000000016', '4111111111111016', 'Paulo Pereira', '03/30', 816, 'Visa'),
+    ('60000017-6017-6017-6017-600000000017', '50000017-5017-5017-5017-500000000017', '5555555555551017', 'Quésia Queiroz', '04/30', 917, 'Mastercard'),
+    ('60000018-6018-6018-6018-600000000018', '50000018-5018-5018-5018-500000000018', '5555555555551018', 'Rafael Ribeiro', '05/30', 918, 'Mastercard'),
+    ('60000019-6019-6019-6019-600000000019', '50000019-5019-5019-5019-500000000019', '4111111111111019', 'Sofia Santos', '06/30', 319, 'Visa'),
+    ('60000020-6020-6020-6020-600000000020', '50000020-5020-5020-5020-500000000020', '4111111111111020', 'Tiago Teixeira', '07/30', 320, 'Visa')
+) v(id, customer_id, card_number, owner_name, expiration, cvv, card_name)
 WHERE NOT EXISTS (SELECT 1 FROM customers);
 
-INSERT INTO customers (id, first_name, last_name, email, status, billing_address_id, shipping_address_id, created_at, modified_at)
-SELECT CAST(v.id AS UUID), v.first_name, v.last_name, v.email, v.status, CAST(v.billing_id AS UUID), CAST(v.shipping_id AS UUID), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+INSERT INTO customers (
+    id, first_name, last_name, email, customer_status,
+    address_line_1, address_line_2, city, state_province, postal_code, country,
+    created_at, modified_at
+)
+SELECT
+    CAST(v.id AS UUID), v.first_name, v.last_name, v.email, v.customer_status,
+    v.address_line_1, v.address_line_2, v.city, v.state_province, v.postal_code, v.country,
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM (VALUES
- ('10000000-0000-0000-0000-000000000001','Zephyr','Quill','zephyr.quill@example.com','ACTIVE','00000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000002'),
- ('10000000-0000-0000-0000-000000000002','Maribel','Thornfield','maribel.thornfield@example.com','ACTIVE','00000000-0000-0000-0000-000000000003','00000000-0000-0000-0000-000000000004'),
- ('10000000-0000-0000-0000-000000000003','Orson','Vexley','orson.vexley@example.com','SUSPENDED','00000000-0000-0000-0000-000000000005','00000000-0000-0000-0000-000000000006'),
- ('10000000-0000-0000-0000-000000000004','Calista','Moonridge','calista.moonridge@example.com','ACTIVE','00000000-0000-0000-0000-000000000007','00000000-0000-0000-0000-000000000008'),
- ('10000000-0000-0000-0000-000000000005','Bram','Holloway','bram.holloway@example.com','INACTIVE','00000000-0000-0000-0000-000000000009','00000000-0000-0000-0000-00000000000a'),
- ('10000000-0000-0000-0000-000000000006','Elowen','Cricket','elowen.cricket@example.com','ACTIVE','00000000-0000-0000-0000-00000000000b','00000000-0000-0000-0000-00000000000c'),
- ('10000000-0000-0000-0000-000000000007','Rafferty','Nightingale','rafferty.nightingale@example.com','ACTIVE','00000000-0000-0000-0000-00000000000d','00000000-0000-0000-0000-00000000000e'),
- ('10000000-0000-0000-0000-000000000008','Saskia','Pebbleton','saskia.pebbleton@example.com','SUSPENDED','00000000-0000-0000-0000-00000000000f','00000000-0000-0000-0000-000000000010'),
- ('10000000-0000-0000-0000-000000000009','Dorian','Foxglove','dorian.foxglove@example.com','ACTIVE','00000000-0000-0000-0000-000000000011','00000000-0000-0000-0000-000000000012'),
- ('10000000-0000-0000-0000-00000000000a','Imogen','Starling','imogen.starling@example.com','ACTIVE','00000000-0000-0000-0000-000000000013','00000000-0000-0000-0000-000000000014'),
- ('10000000-0000-0000-0000-00000000000b','Peregrine','Wick','peregrine.wick@example.com','INACTIVE','00000000-0000-0000-0000-000000000015','00000000-0000-0000-0000-000000000016'),
- ('10000000-0000-0000-0000-00000000000c','Juniper','Marlow','juniper.marlow@example.com','ACTIVE','00000000-0000-0000-0000-000000000017','00000000-0000-0000-0000-000000000018'),
- ('10000000-0000-0000-0000-00000000000d','Caspian','Dapple','caspian.dapple@example.com','ACTIVE','00000000-0000-0000-0000-000000000019','00000000-0000-0000-0000-00000000001a'),
- ('10000000-0000-0000-0000-00000000000e','Theodora','Bracken','theodora.bracken@example.com','SUSPENDED','00000000-0000-0000-0000-00000000001b','00000000-0000-0000-0000-00000000001c'),
- ('10000000-0000-0000-0000-00000000000f','Lucian','Mossgrove','lucian.mossgrove@example.com','ACTIVE','00000000-0000-0000-0000-00000000001d','00000000-0000-0000-0000-00000000001e'),
- ('10000000-0000-0000-0000-000000000010','Ophelia','Rookwood','ophelia.rookwood@example.com','ACTIVE','00000000-0000-0000-0000-00000000001f','00000000-0000-0000-0000-000000000020'),
- ('10000000-0000-0000-0000-000000000011','Alistair','Quasar','alistair.quasar@example.com','INACTIVE','00000000-0000-0000-0000-000000000021','00000000-0000-0000-0000-000000000022'),
- ('10000000-0000-0000-0000-000000000012','Seraphina','Tumbleweed','seraphina.tumbleweed@example.com','ACTIVE','00000000-0000-0000-0000-000000000023','00000000-0000-0000-0000-000000000024'),
- ('10000000-0000-0000-0000-000000000013','Magnus','Larkspur','magnus.larkspur@example.com','ACTIVE','00000000-0000-0000-0000-000000000025','00000000-0000-0000-0000-000000000026'),
- ('10000000-0000-0000-0000-000000000014','Niamh','Cinderby','niamh.cinderby@example.com','SUSPENDED','00000000-0000-0000-0000-000000000027','00000000-0000-0000-0000-000000000028')
-) v(id, first_name, last_name, email, status, billing_id, shipping_id)
+    ('50000001-5001-5001-5001-500000000001', 'Ana', 'Almeida', 'ana.almeida@example.com', 'ACTIVE', 'Rua das Palmeiras, 101', 'Apto 11', 'São Paulo', 'SP', '01310-100', 'Brazil'),
+    ('50000002-5002-5002-5002-500000000002', 'Bruno', 'Barbosa', 'bruno.barbosa@example.com', 'ACTIVE', 'Avenida Atlântica, 202', 'Sala 3', 'Rio de Janeiro', 'RJ', '22021-001', 'Brazil'),
+    ('50000003-5003-5003-5003-500000000003', 'Carla', 'Cardoso', 'carla.cardoso@example.com', 'ACTIVE', 'Rua do Comércio, 303', 'Casa', 'Belo Horizonte', 'MG', '30110-010', 'Brazil'),
+    ('50000004-5004-5004-5004-500000000004', 'Diego', 'Dias', 'diego.dias@example.com', 'SUSPENDED', 'Rua das Flores, 404', 'Bloco B', 'Curitiba', 'PR', '80010-000', 'Brazil'),
+    ('50000005-5005-5005-5005-500000000005', 'Elisa', 'Esteves', 'elisa.esteves@example.com', 'ACTIVE', 'Avenida Boa Viagem, 505', 'Apto 702', 'Recife', 'PE', '51011-000', 'Brazil'),
+    ('50000006-5006-5006-5006-500000000006', 'Felipe', 'Ferreira', 'felipe.ferreira@example.com', 'ACTIVE', 'Rua do Sol, 606', 'Casa 2', 'Salvador', 'BA', '40020-000', 'Brazil'),
+    ('50000007-5007-5007-5007-500000000007', 'Gabriela', 'Gomes', 'gabriela.gomes@example.com', 'INACTIVE', 'Rua das Acácias, 707', 'Fundos', 'Fortaleza', 'CE', '60160-230', 'Brazil'),
+    ('50000008-5008-5008-5008-500000000008', 'Heitor', 'Henrique', 'heitor.henrique@example.com', 'ACTIVE', 'Avenida das Nações, 808', 'Apto 14', 'Brasília', 'DF', '70200-001', 'Brazil'),
+    ('50000009-5009-5009-5009-500000000009', 'Isabela', 'Ibrahim', 'isabela.ibrahim@example.com', 'ACTIVE', 'Rua das Laranjeiras, 909', 'Casa A', 'Porto Alegre', 'RS', '90010-120', 'Brazil'),
+    ('50000010-5010-5010-5010-500000000010', 'João', 'Jardim', 'joao.jardim@example.com', 'SUSPENDED', 'Rua XV de Novembro, 1010', 'Sala 8', 'Florianópolis', 'SC', '88010-400', 'Brazil'),
+    ('50000011-5011-5011-5011-500000000011', 'Karina', 'Klein', 'karina.klein@example.com', 'ACTIVE', 'Avenida Ipiranga, 1111', 'Apto 31', 'Goiânia', 'GO', '74000-000', 'Brazil'),
+    ('50000012-5012-5012-5012-500000000012', 'Lucas', 'Lopes', 'lucas.lopes@example.com', 'ACTIVE', 'Rua da Liberdade, 1212', 'Casa', 'Manaus', 'AM', '69005-040', 'Brazil'),
+    ('50000013-5013-5013-5013-500000000013', 'Marina', 'Martins', 'marina.martins@example.com', 'ACTIVE', 'Rua dos Ipês, 1313', 'Bloco 1', 'Campinas', 'SP', '13010-050', 'Brazil'),
+    ('50000014-5014-5014-5014-500000000014', 'Nicolas', 'Nogueira', 'nicolas.nogueira@example.com', 'INACTIVE', 'Avenida Central, 1414', 'Apto 205', 'Vitória', 'ES', '29010-000', 'Brazil'),
+    ('50000015-5015-5015-5015-500000000015', 'Olivia', 'Oliveira', 'olivia.oliveira@example.com', 'ACTIVE', 'Rua Tiradentes, 1515', 'Casa 4', 'Natal', 'RN', '59000-000', 'Brazil'),
+    ('50000016-5016-5016-5016-500000000016', 'Paulo', 'Pereira', 'paulo.pereira@example.com', 'ACTIVE', 'Rua do Mercado, 1616', 'Loja 6', 'Belém', 'PA', '66010-000', 'Brazil'),
+    ('50000017-5017-5017-5017-500000000017', 'Quésia', 'Queiroz', 'quesia.queiroz@example.com', 'SUSPENDED', 'Avenida Brasil, 1717', 'Apto 9', 'João Pessoa', 'PB', '58010-000', 'Brazil'),
+    ('50000018-5018-5018-5018-500000000018', 'Rafael', 'Ribeiro', 'rafael.ribeiro@example.com', 'ACTIVE', 'Rua São José, 1818', 'Casa B', 'São Luís', 'MA', '65010-000', 'Brazil'),
+    ('50000019-5019-5019-5019-500000000019', 'Sofia', 'Santos', 'sofia.santos@example.com', 'ACTIVE', 'Rua das Oliveiras, 1919', 'Apto 12', 'Campo Grande', 'MS', '79002-000', 'Brazil'),
+    ('50000020-5020-5020-5020-500000000020', 'Tiago', 'Teixeira', 'tiago.teixeira@example.com', 'ACTIVE', 'Avenida Independência, 2020', 'Casa 5', 'Aracaju', 'SE', '49010-000', 'Brazil')
+) v(id, first_name, last_name, email, customer_status, address_line_1, address_line_2, city, state_province, postal_code, country)
 WHERE NOT EXISTS (SELECT 1 FROM customers);

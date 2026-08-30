@@ -17,11 +17,11 @@ import java.util.UUID;
 @Service
 public class DefaultCustomerService implements CustomerService {
     private final CustomerRepository repository;
-    private final ApplicationEventPublisher events;
+    private final ApplicationEventPublisher eventsPublisher;
 
-    public DefaultCustomerService(final CustomerRepository repository, final ApplicationEventPublisher events) {
+    public DefaultCustomerService(final CustomerRepository repository, final ApplicationEventPublisher eventsPublisher) {
         this.repository = repository;
-        this.events = events;
+        this.eventsPublisher = eventsPublisher;
     }
 
     @Override
@@ -46,7 +46,7 @@ public class DefaultCustomerService implements CustomerService {
         entity.setCreatedAt(now);
         entity.setModifiedAt(now);
         final CustomerDTO result = CustomerMapper.toDto(repository.save(entity));
-        events.publishEvent(result);
+        eventsPublisher.publishEvent(result);
         return result;
     }
 
@@ -57,11 +57,16 @@ public class DefaultCustomerService implements CustomerService {
         entity.setFirstName(customer.getFirstName());
         entity.setLastName(customer.getLastName());
         entity.setEmail(customer.getEmail());
-        entity.setDateOfBirth(customer.getDateOfBirth());
-        entity.setStatus(customer.getStatus());
+        entity.setCustomerStatus(customer.getCustomerStatus());
+        entity.setAddressLine1(customer.getAddressLine1());
+        entity.setAddressLine2(customer.getAddressLine2());
+        entity.setCity(customer.getCity());
+        entity.setCountry(customer.getCountry());
+        entity.setPostalCode(customer.getPostalCode());
+        entity.setStateProvince(customer.getStateProvince());
         entity.setModifiedAt(Instant.now());
         final CustomerDTO result = CustomerMapper.toDto(repository.save(entity));
-        events.publishEvent(result);
+        eventsPublisher.publishEvent(result);
         return result;
     }
 

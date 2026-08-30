@@ -1,6 +1,5 @@
 package net.wowdev.ecommerce.cutomers.config;
 
-import net.wowdev.ecommerce.domain.dto.CustomerDTO;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -23,50 +22,88 @@ import java.util.Map;
 @Configuration
 @EnableKafka
 public class KafkaConfig {
-    @Bean
-    public ProducerFactory<String, CustomerDTO> customerProducerFactory(
-            @Value("${spring.kafka.bootstrap-servers}") final String brokers,
-            @Value("${spring.kafka.producer.retries:5}") final int retries) {
-        final Map<String, Object> properties = new HashMap<>();
-        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers);
-        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JacksonJsonSerializer.class);
-        properties.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
-        properties.put(ProducerConfig.ACKS_CONFIG, "all");
-        properties.put(ProducerConfig.RETRIES_CONFIG, retries);
-        return new DefaultKafkaProducerFactory<>(properties);
-    }
+
+    @Value("${spring.kafka.consumer.group-id}")
+    private String consumerGroup;
+
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
+
+    @Value("${spring.kafka.producer.acks:all}")
+    private String acks;
+
+    @Value("${spring.kafka.producer.properties.delivery.timeout.ms:30000}")
+    private String deliveryTimeout;
+
+    @Value("${spring.kafka.producer.properties.linger.ms:0}")
+    private String linger;
+
+    @Value("${spring.kafka.producer.properties.request.timeout.ms:10000}")
+    private String requestTimeout;
+
+    @Value("${spring.kafka.producer.properties.enable.idempotence:true}")
+    private boolean idempotence;
+
+    @Value("${spring.kafka.producer.retries:3}")
+    private Integer retries;
+
+    @Value("${spring.kafka.producer.properties.max.in.flight.requests.per.connection:5}")
+    private Integer maxRequestsInFlight;
+
+    @Value("${spring.kafka.consumer.properties.spring.json.trusted.packages}")
+    private String trustedPackages;
 
     @Bean
-    public KafkaTemplate<String, CustomerDTO> customerKafkaTemplate(
-            final ProducerFactory<String, CustomerDTO> factory) {
+    public KafkaTemplate<String, Object> kafkaTemplate(
+            final ProducerFactory<String, Object> factory) {
         return new KafkaTemplate<>(factory);
     }
 
     @Bean
-    public ConsumerFactory<String, CustomerDTO> customerConsumerFactory(
-            @Value("${spring.kafka.bootstrap-servers}") final String brokers,
-            @Value("${spring.kafka.consumer.group-id}") final String groupId) {
-        final Map<String, Object> properties = new HashMap<>();
-        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers);
-        properties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JacksonJsonDeserializer.class);
-        properties.put(JacksonJsonDeserializer.TRUSTED_PACKAGES, "net.wowdev.ecommerce.domain.dto");
-        return new DefaultKafkaConsumerFactory<>(properties, new StringDeserializer(),
-                new JacksonJsonDeserializer<>(CustomerDTO.class));
+    public ProducerFactory<String, Object> producerFactory() {
+        final Map<String, Object> config = new HashMap<>();
+
+        // Mandatory companion of enable.idempotence — Kafka refuses to start the producer
+        // Exactly-once-per-partition semantics: the broker deduplicates retried batches
+        // using the producer id + sequence number.
+        config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, idempotence);
+
+        // with acks=0 or acks=1 because it cannot deduplicate without full ISR ack.
+        config.put(ProducerConfig.RETRIES_CONFIG, retries);
+
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JacksonJsonSerializer.class);
+        config.put(ProducerConfig.ACKS_CONFIG, acks);
+        config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, maxRequestsInFlight);
+        config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, deliveryTimeout);
+        config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, requestTimeout);
+        config.put(ProducerConfig.LINGER_MS_CONFIG, linger);
+        return new DefaultKafkaProducerFactory<>(config);
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, CustomerDTO> customerKafkaListenerContainerFactory(
-            final ConsumerFactory<String, CustomerDTO> consumerFactory,
-            final KafkaTemplate<String, CustomerDTO> template,
-            @Value("${spring.kafka.consumer.max-attempts:5}") final long attempts) {
-        final ConcurrentKafkaListenerContainerFactory<String, CustomerDTO> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerFactory);
-        factory.setCommonErrorHandler(new DefaultErrorHandler(new DeadLetterPublishingRecoverer(template),
-                new FixedBackOff(1000L, attempts - 1)));
+    public ConsumerFactory<String, Object> consumerFactory() {
+        final Map<String, Object> props = new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroup);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JacksonJsonDeserializer.class);
+        props.put(JacksonJsonDeserializer.TRUSTED_PACKAGES, trustedPackages);
+        return new DefaultKafkaConsumerFactory<>(props);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(
+            final ConsumerFactory<String, Object> orderConsumerFactory,
+            final KafkaTemplate<String, Object> kafkaTemplate) {
+        final var factory = new ConcurrentKafkaListenerContainerFactory<String, Object>();
+        factory.setConsumerFactory(orderConsumerFactory);
+        factory.setConcurrency(3);
+
+        factory.setCommonErrorHandler(
+                new DefaultErrorHandler(new DeadLetterPublishingRecoverer(kafkaTemplate),
+                        new FixedBackOff(2000L, retries)));
         return factory;
     }
 }

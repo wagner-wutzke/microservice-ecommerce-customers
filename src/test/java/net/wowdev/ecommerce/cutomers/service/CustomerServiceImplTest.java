@@ -3,7 +3,7 @@ package net.wowdev.ecommerce.cutomers.service;
 import net.wowdev.ecommerce.cutomers.repository.CustomerRepository;
 import net.wowdev.ecommerce.domain.dto.CustomerDTO;
 import net.wowdev.ecommerce.domain.entity.CustomerEntity;
-import net.wowdev.ecommerce.domain.entity.CustomerStatus;
+import net.wowdev.ecommerce.domain.enums.CustomerStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -35,13 +35,15 @@ class CustomerServiceImplTest {
         dto.setFirstName("Ada");
         dto.setLastName("Lovelace");
         dto.setEmail("ada@example.com");
-        dto.setStatus(CustomerStatus.ACTIVE);
+        dto.setCustomerStatus(CustomerStatus.ACTIVE);
         return dto;
     }
 
     private static CustomerEntity entity(final UUID id) {
-        return new CustomerEntity(id, "Ada", "Lovelace", "ada@example.com", null,
-                CustomerStatus.ACTIVE, null, null, java.time.Instant.now(), java.time.Instant.now());
+        return new CustomerEntity(id, "Ada", "Lovelace", "ada@example.com",
+                CustomerStatus.ACTIVE, List.of(), "addressLine1", "addressLine2",
+                "city", "province", "postalCode", "country",
+                java.time.Instant.now(), java.time.Instant.now());
     }
 
     @Test

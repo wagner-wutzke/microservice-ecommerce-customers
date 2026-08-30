@@ -1,7 +1,9 @@
 server:
-  port: ${APP_PORT:9200}
+  port: ${APP_PORT:9300}
+
 spring:
-  application.name: customers-service
+  application:
+    name: customers-service
   datasource:
     url: jdbc:h2:file:./data/customers-db
     driver-class-name: org.h2.Driver
@@ -9,19 +11,42 @@ spring:
     password:
   jpa:
     hibernate.ddl-auto: update
-    defer-datasource-initialization: true
     open-in-view: false
     show-sql: false
+    defer-datasource-initialization: true
+
   sql.init.mode: always
   h2.console.enabled: ${H2_CONSOLE_ENABLED:true}
+
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
     consumer:
-      group-id: ${KAFKA_CONSUMER_GROUP:customers-events-consumer}
-      max-attempts: 5
-      properties.spring.json.trusted.packages: net.wowdev.ecommerce.domain.dto
+      group-id: ${KAFKA_CONSUMER_GROUP:customer-events-group.v1}
+      properties:
+        spring.json.trusted.packages: "net.wowdev.ecommerce.domain.events"
+
     producer:
+      # Strict idempotence. NOTE: Kafka rejects `enable.idempotence=true` together
+      # with acks=1 (ConfigException at producer start) — the broker cannot
+      # deduplicate without full ISR acknowledgement. acks=all is therefore
+      # required; see README "Spec deviations".
       acks: all
-      retries: 5
-      properties.enable.idempotence: true
-app.kafka.customer-changes-topic: ${KAFKA_CUSTOMER_CHANGES_TOPIC:customer-change-topic}
+      retries: 3
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+        delivery.timeout.ms: 30000
+        request.timeout.ms: 10000
+        linger.ms: 0
+
+app:
+  kafka:
+    order-events-topic: ${KAFKA_ORDER_EVENTS_TOPIC:order-events-topic.v1}
+    payment-events-topic: ${KAFKA_PAYMENT_EVENTS_TOPIC:payment-events-topic.v1}
+    customer-events-topic: ${KAFKA_CUSTOMER_EVENTS_TOPIC:customer-events-topic.v1}
+
+logging:
+  level:
+    net.wowdev.ecommerce.orders: DEBUG
+    org.hibernate.orm.jdbc.bind: INFO
