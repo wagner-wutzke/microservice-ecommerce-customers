@@ -1,14 +1,14 @@
 ---
 name: create-kafka-rest-microservice
-description: Create or complete a Java Maven Spring Boot microservice with REST CRUD endpoints, 
-  JPA/H2 persistence, an Avro-backed Kafka producer and consumer, externalized configuration, 
-  DLQ handling, and isolated tests. Use for event-driven REST services whose domain contract is 
+description: Create or complete a Java Maven Spring Boot microservice with REST CRUD endpoints,
+  JPA/H2 persistence, an Avro-backed Kafka producer and consumer, externalized configuration,
+  DLQ handling, and isolated tests. Use for event-driven REST services whose domain contract is
   supplied by an Avro schema in this skill's references directory.
 ---
 
 # Create a Kafka + REST microservice
 
-Create a production-shaped Java Maven service in the current workspace. Inspect before editing, 
+Create a production-shaped Java Maven service in the current workspace. Inspect before editing,
 preserve unrelated changes, and follow repository conventions.
 
 ## 1. Resolve inputs before coding
@@ -104,8 +104,8 @@ equivalent for 404 and other errors. Validate page parameters and test valid, in
 ## 5. H2 Database
 
 - Configure local H2 as file-based (for example `jdbc:h2:file:./data/${domain_object_lower}s-db`), expose `/h2-console`
-only as appropriate for local development, disable SQL logging by default, and set `server.port` with an environment
-override. Keep secrets out of source control.
+  only as appropriate for local development, disable SQL logging by default, and set `server.port` with an environment
+  override. Keep secrets out of source control.
 - Define a `PersistenceConfig` class with an `@EnableJpaAuditing` annotation.
 - Add the annotation `@EntityScan(basePackages = "net.wowdev.ecommerce.domain.entity")` tp the main application class.
 
@@ -116,7 +116,6 @@ override. Keep secrets out of source control.
 - Keep lines at or below 120 characters where practical; break long annotations, generic types, and method calls.
 - Use one import per line, remove unused imports, and keep imports organized by the project formatter.
 - Add concise Javadoc only when public API behavior is non-obvious or required by the repository's quality checks.
-
 
 ## 7. Code style and safety
 

@@ -1,5 +1,11 @@
 package net.wowdev.ecommerce.cutomers.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+import java.util.UUID;
 import net.wowdev.ecommerce.cutomers.service.CustomerNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -7,30 +13,30 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 class ApiExceptionHandlerTest {
-    @Test
-    void mapsNotFound() {
-        final var detail = new ApiExceptionHandler().notFound(new CustomerNotFoundException(UUID.randomUUID()));
-        assertEquals(HttpStatus.NOT_FOUND.value(), detail.getStatus());
-    }
+  @Test
+  void createsNotFoundProblemDetail() {
+    CustomerNotFoundException exception = new CustomerNotFoundException(UUID.randomUUID());
+    var detail = new ApiExceptionHandler().notFound(exception);
 
-    @Test
-    void mapsValidationErrors() {
-        final BindingResult bindingResult = mock(BindingResult.class);
-        final MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
-        when(exception.getBindingResult()).thenReturn(bindingResult);
-        when(bindingResult.getFieldErrors()).thenReturn(
-                java.util.List.of(new FieldError("customer", "email", "must be valid")));
+    assertThat(detail.getStatus()).isEqualTo(HttpStatus.NOT_FOUND.value());
+    assertThat(detail.getDetail()).isEqualTo(exception.getMessage());
+  }
 
-        final var detail = new ApiExceptionHandler().invalid(exception);
+  @Test
+  void joinsAllValidationErrors() {
+    BindingResult bindingResult = mock(BindingResult.class);
+    MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
+    when(exception.getBindingResult()).thenReturn(bindingResult);
+    when(bindingResult.getFieldErrors())
+        .thenReturn(
+            List.of(
+                new FieldError("customer", "email", "must be valid"),
+                new FieldError("customer", "firstName", "must not be blank")));
 
-        assertEquals(HttpStatus.BAD_REQUEST.value(), detail.getStatus());
-        assertEquals("email: must be valid", detail.getDetail());
-    }
+    var detail = new ApiExceptionHandler().invalid(exception);
+
+    assertThat(detail.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+    assertThat(detail.getDetail()).isEqualTo("email: must be valid, firstName: must not be blank");
+  }
 }

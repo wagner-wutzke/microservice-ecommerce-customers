@@ -48,5 +48,5 @@ app:
 
 logging:
   level:
-    net.wowdev.ecommerce.orders: DEBUG
+    net.wowdev.ecommerce.cutomers: DEBUG
     org.hibernate.orm.jdbc.bind: INFO
