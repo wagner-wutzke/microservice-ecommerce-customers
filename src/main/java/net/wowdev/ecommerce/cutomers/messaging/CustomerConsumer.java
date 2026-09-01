@@ -21,7 +21,7 @@ public class CustomerConsumer {
 
   @KafkaHandler
   public void handleOrderProcessingStarted(OrderProcessingStartedEvent event) {
-    log.debug(">>>> Processing OrderProcessingStartedEvent: {}", event);
+    log.debug(">>>> Processing OrderProcessingStartedEvent...");
     customerService.handleOrderProcessingStarted(event);
   }
 }

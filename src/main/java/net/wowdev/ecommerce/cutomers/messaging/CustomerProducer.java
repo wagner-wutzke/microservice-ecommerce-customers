@@ -32,13 +32,13 @@ public class CustomerProducer {
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void publish(final CustomerDataFailedEvent event) {
-    log.debug(">>>> Publishing CustomerDataFailedEvent: {}", event);
+    log.debug(">>>> Publishing CustomerDataFailedEvent...");
     template.send(customerEventsTopic, event.eventId().toString(), event);
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void publish(final PaymentMethodLoadedEvent event) {
-    log.debug(">>>> Publishing PaymentMethodLoadedEvent: {}", event);
+    log.debug(">>>> Publishing PaymentMethodLoadedEvent...");
     template.send(customerEventsTopic, event.eventId().toString(), event);
   }
 }

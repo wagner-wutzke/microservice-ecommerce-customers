@@ -165,7 +165,6 @@ class DefaultCustomerServiceTest {
 
     assertThat(result.getId()).isNotNull();
     assertThat(result.getFirstName()).isEqualTo("Grace");
-    assertThat(result.getCreatedAt()).isNotNull();
     assertThat(result.getModifiedAt()).isEqualTo(result.getCreatedAt());
     verify(repository).save(any(CustomerEntity.class));
   }

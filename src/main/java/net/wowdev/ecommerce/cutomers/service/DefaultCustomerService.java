@@ -49,11 +49,18 @@ public class DefaultCustomerService implements CustomerService {
   @Override
   @Transactional
   public CustomerDTO create(final CustomerDTO customer) {
-    final Instant now = Instant.now();
+    final UUID customerId = UUID.randomUUID();
+    customer.setId(customerId);
+    customer
+        .getPaymentMethods()
+        .forEach(
+            (paymentMethod) -> {
+              final UUID paymentMethodId = UUID.randomUUID();
+              paymentMethod.setCustomerId(customerId);
+              paymentMethod.setId(paymentMethodId);
+            });
     final CustomerEntity entity = CustomerMapper.toEntity(customer);
-    entity.setId(UUID.randomUUID());
-    entity.setCreatedAt(now);
-    entity.setModifiedAt(now);
+
     return CustomerMapper.toDto(repository.save(entity));
   }
 
@@ -89,7 +96,7 @@ public class DefaultCustomerService implements CustomerService {
     UUID customerId = event.orderDTO().getCustomerId();
     try {
       CustomerDTO customerDTO = this.findById(customerId);
-      log.debug(">>>> Loaded CustomerDTO: {}", customerDTO);
+      log.debug(">>>> Loaded Customer record for id: {}", customerId);
 
       // TODO get the Payment Method entry marked as default
       this.publishPaymentMethodLoaded(event, customerDTO.getPaymentMethods().getFirst());
@@ -98,7 +105,7 @@ public class DefaultCustomerService implements CustomerService {
       customerDTO.getPaymentMethods().clear();
       this.publishCustomerDataLoaded(event, customerDTO);
     } catch (Exception e) {
-      log.error(">>>> Failed loading CustomerDTO: {}", e.getMessage());
+      log.error(">>>> Failed loading Customer record for id {}: {}", customerId, e.getMessage());
       this.publishCustomerDataFailed(event, e.getMessage());
     }
   }
