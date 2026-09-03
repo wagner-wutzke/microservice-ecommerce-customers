@@ -24,7 +24,7 @@ class CustomerConsumerTest {
                 Instant.now(),
                 MessagingCustomerService.ORIGIN_SERVICE);
 
-    consumer.handleOrderCreated(event);
+    consumer.handle(event);
 
     verify(service).handleOrderCreated(event);
   }

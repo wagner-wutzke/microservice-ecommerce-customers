@@ -24,30 +24,30 @@ public class CustomerProducer {
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void publish(final CustomerLoadedEvent event) {
-    log.debug(">>>> Publishing CustomerLoadedEvent: {}", event.eventId());
+    log.debug(">> Publishing CustomerLoadedEvent: {}", event.eventId());
     template.send(customerEventsTopic, event.eventId().toString(), event);
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void publish(final CustomerLoadingFailedEvent event) {
-    log.debug(">>>> Publishing CustomerLoadingFailedEvent: {}", event.eventId());
+    log.debug(">> Publishing CustomerLoadingFailedEvent: {}", event.eventId());
     template.send(customerEventsTopic, event.eventId().toString(), event);
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void publish(final PaymentMethodLoadedEvent event) {
-    log.debug(">>>> Publishing PaymentMethodLoadedEvent: {}", event.eventId());
+    log.debug(">> Publishing PaymentMethodLoadedEvent: {}", event.eventId());
     template.send(customerEventsTopic, event.eventId().toString(), event);
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void publish(final PaymentMethodLoadingFailedEvent event) {
-    log.debug(">>>> Publishing PaymentMethodLoadingFailedEvent: {}", event.eventId());
+    log.debug(">> Publishing PaymentMethodLoadingFailedEvent: {}", event.eventId());
     template.send(customerEventsTopic, event.eventId().toString(), event);
   }
 
   public void publish(OrderProcessingStartedEvent event) {
-    log.debug(">>>> Publishing OrderProcessingStartedEvent: {}", event.eventId());
+    log.debug(">> Publishing OrderProcessingStartedEvent: {}", event.eventId());
     template.send(customerEventsTopic, event.eventId().toString(), event);
   }
 }

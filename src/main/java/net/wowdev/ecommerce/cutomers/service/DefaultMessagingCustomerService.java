@@ -43,7 +43,7 @@ public class DefaultMessagingCustomerService implements MessagingCustomerService
       this.publishOrderProcessingStarted(event);
     } catch (Exception exception) {
       log.error(
-          ">>>> Failed loading Customer record for id {}: {}", customerId, exception.getMessage());
+          ">> Failed loading Customer record for id {}: {}", customerId, exception.getMessage());
       this.publishCustomerLoadingFailed(event, exception.getMessage());
     }
   }

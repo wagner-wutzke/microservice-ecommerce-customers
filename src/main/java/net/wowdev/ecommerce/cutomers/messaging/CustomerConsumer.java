@@ -13,15 +13,15 @@ import org.springframework.stereotype.Component;
 @KafkaListener(
     groupId = "${spring.kafka.consumer.group-id}",
     containerFactory = "kafkaListenerContainerFactory",
-    topics = "${app.kafka.order-events-topic}")
+    topics = "${app.kafka.orders-topic}")
 @AllArgsConstructor
 public class CustomerConsumer {
 
-  private final MessagingCustomerService customerService;
+  private final MessagingCustomerService messagingCustomerService;
 
   @KafkaHandler
-  public void handleOrderCreated(OrderCreatedEvent event) {
-    log.debug(">>>> Processing {}:  {}", event.getClass().getSimpleName(), event.eventId());
-    customerService.handleOrderCreated(event);
+  public void handle(OrderCreatedEvent event) {
+    log.debug(">> Processing OrderCreatedEvent:  {}", event.eventId());
+    messagingCustomerService.handleOrderCreated(event);
   }
 }
