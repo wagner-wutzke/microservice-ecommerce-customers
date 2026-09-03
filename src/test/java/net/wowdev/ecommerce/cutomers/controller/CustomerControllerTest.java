@@ -6,7 +6,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.UUID;
-import net.wowdev.ecommerce.cutomers.service.CustomerService;
+import net.wowdev.ecommerce.cutomers.service.CrudCustomerService;
 import net.wowdev.ecommerce.domain.dto.CustomerDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpStatus;
 
 class CustomerControllerTest {
-  @Mock private CustomerService service;
+  @Mock private CrudCustomerService service;
   private CustomerController controller;
   private UUID id;
   private CustomerDTO customer;

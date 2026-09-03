@@ -2,10 +2,9 @@ package net.wowdev.ecommerce.cutomers.service;
 
 import java.util.UUID;
 import net.wowdev.ecommerce.domain.dto.CustomerDTO;
-import net.wowdev.ecommerce.domain.events.OrderProcessingStartedEvent;
 import org.springframework.data.domain.Page;
 
-public interface CustomerService {
+public interface CrudCustomerService {
 
   CustomerDTO findById(UUID id);
 
@@ -16,6 +15,4 @@ public interface CustomerService {
   CustomerDTO update(UUID id, CustomerDTO customer);
 
   void delete(UUID id);
-
-  void handleOrderProcessingStarted(OrderProcessingStartedEvent event);
 }

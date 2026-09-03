@@ -1,20 +1,13 @@
 package net.wowdev.ecommerce.cutomers.service;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.wowdev.ecommerce.cutomers.messaging.CustomerProducer;
 import net.wowdev.ecommerce.cutomers.repository.CustomerRepository;
 import net.wowdev.ecommerce.domain.dto.CustomerDTO;
-import net.wowdev.ecommerce.domain.dto.PaymentMethodDTO;
 import net.wowdev.ecommerce.domain.entity.CustomerEntity;
-import net.wowdev.ecommerce.domain.events.CustomerDataFailedEvent;
-import net.wowdev.ecommerce.domain.events.CustomerDataLoadedEvent;
-import net.wowdev.ecommerce.domain.events.OrderProcessingStartedEvent;
-import net.wowdev.ecommerce.domain.events.PaymentMethodLoadedEvent;
+import net.wowdev.ecommerce.domain.events.*;
 import net.wowdev.ecommerce.domain.mapper.CustomerMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,11 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DefaultCustomerService implements CustomerService {
+public class DefaultCrudCustomerService implements CrudCustomerService {
 
   private final CustomerRepository repository;
-
-  private final CustomerProducer customerProducer;
 
   @Override
   @Transactional(readOnly = true)
@@ -88,57 +79,5 @@ public class DefaultCustomerService implements CustomerService {
   public void delete(final UUID id) {
     if (!repository.existsById(id)) throw new CustomerNotFoundException(id);
     repository.deleteById(id);
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public void handleOrderProcessingStarted(OrderProcessingStartedEvent event) {
-    UUID customerId = event.orderDTO().getCustomerId();
-    try {
-      CustomerDTO customerDTO = this.findById(customerId);
-      log.debug(">>>> Loaded Customer record for id: {}", customerId);
-
-      // TODO get the Payment Method entry marked as default
-      this.publishPaymentMethodLoaded(event, customerDTO.getPaymentMethods().getFirst());
-
-      // remove payment info before sending customer data
-      customerDTO.getPaymentMethods().clear();
-      this.publishCustomerDataLoaded(event, customerDTO);
-    } catch (Exception e) {
-      log.error(">>>> Failed loading Customer record for id {}: {}", customerId, e.getMessage());
-      this.publishCustomerDataFailed(event, e.getMessage());
-    }
-  }
-
-  protected void publishCustomerDataLoaded(
-      OrderProcessingStartedEvent event, CustomerDTO customerDTO) {
-    CustomerDataLoadedEvent customerDataLoadedEvent =
-        new CustomerDataLoadedEvent(
-            UUID.randomUUID(),
-            event.transactionId(),
-            customerDTO,
-            LocalDateTime.now().toInstant(ZoneOffset.UTC));
-    customerProducer.publish(customerDataLoadedEvent);
-  }
-
-  protected void publishCustomerDataFailed(OrderProcessingStartedEvent event, String reason) {
-    customerProducer.publish(
-        new CustomerDataFailedEvent(
-            UUID.randomUUID(),
-            event.transactionId(),
-            null,
-            reason,
-            LocalDateTime.now().toInstant(ZoneOffset.UTC)));
-  }
-
-  protected void publishPaymentMethodLoaded(
-      OrderProcessingStartedEvent event, PaymentMethodDTO paymentMethodDTO) {
-    PaymentMethodLoadedEvent paymentMethodLoadedEvent =
-        new PaymentMethodLoadedEvent(
-            UUID.randomUUID(),
-            event.transactionId(),
-            paymentMethodDTO,
-            LocalDateTime.now().toInstant(ZoneOffset.UTC));
-    customerProducer.publish(paymentMethodLoadedEvent);
   }
 }

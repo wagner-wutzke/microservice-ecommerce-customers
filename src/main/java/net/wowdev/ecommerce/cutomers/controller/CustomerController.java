@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import java.net.URI;
 import java.util.UUID;
-import net.wowdev.ecommerce.cutomers.service.CustomerService;
+import net.wowdev.ecommerce.cutomers.service.CrudCustomerService;
 import net.wowdev.ecommerce.domain.dto.CustomerDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 @RequestMapping("/api/v1/customers")
 public class CustomerController {
-  private final CustomerService service;
+  private final CrudCustomerService service;
 
-  public CustomerController(final CustomerService service) {
+  public CustomerController(final CrudCustomerService service) {
     this.service = service;
   }
 

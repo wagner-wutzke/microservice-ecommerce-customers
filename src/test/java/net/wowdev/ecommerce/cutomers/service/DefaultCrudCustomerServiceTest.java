@@ -15,14 +15,10 @@ import net.wowdev.ecommerce.cutomers.messaging.CustomerProducer;
 import net.wowdev.ecommerce.cutomers.repository.CustomerRepository;
 import net.wowdev.ecommerce.domain.dto.CustomerDTO;
 import net.wowdev.ecommerce.domain.dto.OrderDTO;
-import net.wowdev.ecommerce.domain.dto.PaymentMethodDTO;
 import net.wowdev.ecommerce.domain.entity.CustomerEntity;
 import net.wowdev.ecommerce.domain.entity.PaymentMethodEntity;
 import net.wowdev.ecommerce.domain.enums.CustomerStatus;
-import net.wowdev.ecommerce.domain.events.CustomerDataFailedEvent;
-import net.wowdev.ecommerce.domain.events.CustomerDataLoadedEvent;
-import net.wowdev.ecommerce.domain.events.OrderProcessingStartedEvent;
-import net.wowdev.ecommerce.domain.events.PaymentMethodLoadedEvent;
+import net.wowdev.ecommerce.domain.events.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -32,10 +28,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
-class DefaultCustomerServiceTest {
+class DefaultCrudCustomerServiceTest {
   @Mock private CustomerRepository repository;
   @Mock private CustomerProducer producer;
-  private DefaultCustomerService service;
+  private DefaultCrudCustomerService service;
   private UUID id;
 
   private static CustomerDTO dto(UUID customerId, String firstName) {
@@ -103,17 +99,21 @@ class DefaultCustomerServiceTest {
         Instant.now());
   }
 
-  private static OrderProcessingStartedEvent orderEvent(UUID customerId) {
+  private static OrderCreatedEvent orderEvent(UUID customerId) {
     OrderDTO order = new OrderDTO();
     order.setCustomerId(customerId);
-    return new OrderProcessingStartedEvent(
-        UUID.randomUUID(), "transaction-1", order, Instant.now());
+    return new OrderCreatedEvent(
+        UUID.randomUUID(),
+        "transaction-1",
+        order,
+        Instant.now(),
+        MessagingCustomerService.ORIGIN_SERVICE);
   }
 
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    service = new DefaultCustomerService(repository, producer);
+    service = new DefaultCrudCustomerService(repository);
     id = UUID.randomUUID();
   }
 
@@ -217,49 +217,5 @@ class DefaultCustomerServiceTest {
 
     assertThatThrownBy(() -> service.delete(id)).isInstanceOf(CustomerNotFoundException.class);
     verify(repository, never()).deleteById(id);
-  }
-
-  @Test
-  void publishesPaymentMethodThenCustomerWithoutPaymentDetails() {
-    PaymentMethodDTO payment = new PaymentMethodDTO();
-    CustomerDTO customer = dto(id, "Ada");
-    customer.setPaymentMethods(List.of(payment));
-    OrderProcessingStartedEvent event = orderEvent(id);
-    when(repository.findById(id)).thenReturn(Optional.of(entityWithPayment(id)));
-
-    service.handleOrderProcessingStarted(event);
-
-    ArgumentCaptor<PaymentMethodLoadedEvent> paymentEvent =
-        ArgumentCaptor.forClass(PaymentMethodLoadedEvent.class);
-    ArgumentCaptor<CustomerDataLoadedEvent> customerEvent =
-        ArgumentCaptor.forClass(CustomerDataLoadedEvent.class);
-    verify(producer).publish(paymentEvent.capture());
-    verify(producer).publish(customerEvent.capture());
-    assertThat(paymentEvent.getValue().paymentMethodDTO()).isNotNull();
-    CustomerDataLoadedEvent loaded = customerEvent.getValue();
-    assertThat(loaded.customerDTO().getPaymentMethods()).isEmpty();
-  }
-
-  @Test
-  void publishesFailureWhenCustomerCannotBeLoaded() {
-    when(repository.findById(id)).thenReturn(Optional.empty());
-    OrderProcessingStartedEvent event = orderEvent(id);
-
-    service.handleOrderProcessingStarted(event);
-
-    ArgumentCaptor<CustomerDataFailedEvent> failure =
-        ArgumentCaptor.forClass(CustomerDataFailedEvent.class);
-    verify(producer).publish(failure.capture());
-    assertThat(failure.getValue().transactionId()).isEqualTo("transaction-1");
-    assertThat(failure.getValue().reason()).isEqualTo("Customer not found: " + id);
-  }
-
-  @Test
-  void publishesFailureWhenCustomerHasNoPaymentMethods() {
-    when(repository.findById(id)).thenReturn(Optional.of(entity(id, "Ada")));
-
-    service.handleOrderProcessingStarted(orderEvent(id));
-
-    verify(producer).publish(any(CustomerDataFailedEvent.class));
   }
 }
