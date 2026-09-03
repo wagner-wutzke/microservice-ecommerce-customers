@@ -5,22 +5,27 @@ import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 import java.util.UUID;
-import net.wowdev.ecommerce.cutomers.service.CustomerService;
+
+import net.wowdev.ecommerce.cutomers.service.MessagingCustomerService;
 import net.wowdev.ecommerce.domain.dto.OrderDTO;
-import net.wowdev.ecommerce.domain.events.OrderProcessingStartedEvent;
+import net.wowdev.ecommerce.domain.events.OrderCreatedEvent;
 import org.junit.jupiter.api.Test;
 
 class CustomerConsumerTest {
   @Test
-  void delegatesOrderProcessingEvent() {
-    CustomerService service = mock(CustomerService.class);
+  void delegatesOrderCreatedEvent() {
+    MessagingCustomerService service = mock(MessagingCustomerService.class);
     CustomerConsumer consumer = new CustomerConsumer(service);
-    OrderProcessingStartedEvent event =
-        new OrderProcessingStartedEvent(
-            UUID.randomUUID(), "transaction-1", new OrderDTO(), Instant.now());
+    OrderCreatedEvent event =
+        new OrderCreatedEvent(
+                UUID.randomUUID(),
+                "transaction-1",
+                new OrderDTO(),
+                Instant.now(),
+                MessagingCustomerService.ORIGIN_SERVICE);
 
-    consumer.handleOrderProcessingStarted(event);
+    consumer.handleOrderCreated(event);
 
-    verify(service).handleOrderProcessingStarted(event);
+    verify(service).handleOrderCreated(event);
   }
 }

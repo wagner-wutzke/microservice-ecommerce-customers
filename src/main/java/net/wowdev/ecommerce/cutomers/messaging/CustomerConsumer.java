@@ -2,8 +2,8 @@ package net.wowdev.ecommerce.cutomers.messaging;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.wowdev.ecommerce.cutomers.service.CustomerService;
-import net.wowdev.ecommerce.domain.events.OrderProcessingStartedEvent;
+import net.wowdev.ecommerce.cutomers.service.MessagingCustomerService;
+import net.wowdev.ecommerce.domain.events.OrderCreatedEvent;
 import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -17,11 +17,11 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class CustomerConsumer {
 
-  private final CustomerService customerService;
+  private final MessagingCustomerService customerService;
 
   @KafkaHandler
-  public void handleOrderProcessingStarted(OrderProcessingStartedEvent event) {
-    log.debug(">>>> Processing OrderProcessingStartedEvent...");
-    customerService.handleOrderProcessingStarted(event);
+  public void handleOrderCreated(OrderCreatedEvent event) {
+    log.debug(">>>> Processing {}:  {}", event.getClass().getSimpleName(), event.eventId());
+    customerService.handleOrderCreated(event);
   }
 }

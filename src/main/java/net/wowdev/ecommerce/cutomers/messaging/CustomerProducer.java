@@ -1,9 +1,7 @@
 package net.wowdev.ecommerce.cutomers.messaging;
 
 import lombok.extern.slf4j.Slf4j;
-import net.wowdev.ecommerce.domain.events.CustomerDataFailedEvent;
-import net.wowdev.ecommerce.domain.events.CustomerDataLoadedEvent;
-import net.wowdev.ecommerce.domain.events.PaymentMethodLoadedEvent;
+import net.wowdev.ecommerce.domain.events.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -19,26 +17,37 @@ public class CustomerProducer {
 
   public CustomerProducer(
       final KafkaTemplate<String, Object> template,
-      @Value("${app.kafka.customer-events-topic}") final String customerEventsTopic) {
+      @Value("${app.kafka.customers-topic}") final String customerEventsTopic) {
     this.template = template;
     this.customerEventsTopic = customerEventsTopic;
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void publish(final CustomerDataLoadedEvent event) {
-    log.debug(">>>> Publishing CustomerDataLoadedEvent: {}", event);
+  public void publish(final CustomerLoadedEvent event) {
+    log.debug(">>>> Publishing CustomerLoadedEvent: {}", event.eventId());
     template.send(customerEventsTopic, event.eventId().toString(), event);
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  public void publish(final CustomerDataFailedEvent event) {
-    log.debug(">>>> Publishing CustomerDataFailedEvent...");
+  public void publish(final CustomerLoadingFailedEvent event) {
+    log.debug(">>>> Publishing CustomerLoadingFailedEvent: {}", event.eventId());
     template.send(customerEventsTopic, event.eventId().toString(), event);
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void publish(final PaymentMethodLoadedEvent event) {
-    log.debug(">>>> Publishing PaymentMethodLoadedEvent...");
+    log.debug(">>>> Publishing PaymentMethodLoadedEvent: {}", event.eventId());
+    template.send(customerEventsTopic, event.eventId().toString(), event);
+  }
+
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void publish(final PaymentMethodLoadingFailedEvent event) {
+    log.debug(">>>> Publishing PaymentMethodLoadingFailedEvent: {}", event.eventId());
+    template.send(customerEventsTopic, event.eventId().toString(), event);
+  }
+
+  public void publish(OrderProcessingStartedEvent event) {
+    log.debug(">>>> Publishing OrderProcessingStartedEvent: {}", event.eventId());
     template.send(customerEventsTopic, event.eventId().toString(), event);
   }
 }
