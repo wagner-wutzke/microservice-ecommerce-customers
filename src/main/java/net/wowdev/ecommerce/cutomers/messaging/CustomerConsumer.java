@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @KafkaListener(
     groupId = "${spring.kafka.consumer.group-id}",
     containerFactory = "kafkaListenerContainerFactory",
-    topics = "${app.kafka.orders-topic}")
+    topics = {"${app.kafka.orders-topic}"})
 @AllArgsConstructor
 public class CustomerConsumer {
 

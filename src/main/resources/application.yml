@@ -53,7 +53,7 @@ logging:
     org.apache.kafka.common: ERROR
     org.apache.kafka.clients: ERROR
     net.wowdev.ecommerce.orders: DEBUG
-    net.wowdev.ecommerce.customers: DEBUG
+    net.wowdev.ecommerce.cutomers: DEBUG
     net.wowdev.ecommerce.inventory: DEBUG
     net.wowdev.ecommerce.payments: DEBUG
     net.wowdev.ecommerce.datareplication: DEBUG
