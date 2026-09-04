@@ -22,9 +22,12 @@ public class CustomerConsumer {
   @KafkaHandler
   public void handle(OrderCreatedEvent event) {
     log.debug(
-        ">> Processing OrderCreatedEvent sent by {}. EventId: {}",
-        event.origin(),
-        event.eventId());
+        ">> Processing OrderCreatedEvent sent by {}. EventId: {}", event.origin(), event.eventId());
     messagingCustomerService.process(event);
+  }
+
+  @KafkaHandler(isDefault = true)
+  public void handleUnknown(Object event) {
+    log.debug(">> Received an unmapped event of type {}", event.getClass().getSimpleName());
   }
 }

@@ -15,6 +15,7 @@ import net.wowdev.ecommerce.cutomers.messaging.CustomerProducer;
 import net.wowdev.ecommerce.cutomers.repository.CustomerRepository;
 import net.wowdev.ecommerce.domain.dto.CustomerDTO;
 import net.wowdev.ecommerce.domain.dto.OrderDTO;
+import net.wowdev.ecommerce.domain.dto.PaymentMethodDTO;
 import net.wowdev.ecommerce.domain.entity.CustomerEntity;
 import net.wowdev.ecommerce.domain.entity.PaymentMethodEntity;
 import net.wowdev.ecommerce.domain.enums.CustomerStatus;
@@ -167,6 +168,22 @@ class DefaultCrudCustomerServiceTest {
     assertThat(result.getFirstName()).isEqualTo("Grace");
     assertThat(result.getModifiedAt()).isEqualTo(result.getCreatedAt());
     verify(repository).save(any(CustomerEntity.class));
+  }
+
+  @Test
+  void createsCustomerAndInitializesPaymentMethodIdentity() {
+    CustomerDTO input = dto(null, "Grace");
+    PaymentMethodDTO paymentMethod = new PaymentMethodDTO();
+    input.setPaymentMethods(List.of(paymentMethod));
+    when(repository.save(any(CustomerEntity.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    CustomerDTO result = service.create(input);
+
+    assertThat(result.getId()).isNotNull();
+    assertThat(result.getPaymentMethods()).hasSize(1);
+    assertThat(result.getPaymentMethods().getFirst().getId()).isNotNull();
+    assertThat(result.getPaymentMethods().getFirst().getCustomerId()).isEqualTo(result.getId());
   }
 
   @Test

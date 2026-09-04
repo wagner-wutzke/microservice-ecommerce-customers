@@ -5,7 +5,6 @@ import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 import java.util.UUID;
-
 import net.wowdev.ecommerce.cutomers.service.MessagingCustomerService;
 import net.wowdev.ecommerce.domain.dto.CustomerDTO;
 import net.wowdev.ecommerce.domain.dto.OrderDTO;
@@ -26,11 +25,11 @@ class CustomerProducerTest {
     UUID eventId = UUID.randomUUID();
     CustomerLoadedEvent event =
         new CustomerLoadedEvent(
-                eventId,
-                "transaction-1",
-                new CustomerDTO(),
-                Instant.now(),
-                MessagingCustomerService.ORIGIN_SERVICE);
+            eventId,
+            "transaction-1",
+            new CustomerDTO(),
+            Instant.now(),
+            MessagingCustomerService.ORIGIN_SERVICE);
 
     producer.publish(event);
 
@@ -42,12 +41,12 @@ class CustomerProducerTest {
     UUID eventId = UUID.randomUUID();
     CustomerLoadingFailedEvent event =
         new CustomerLoadingFailedEvent(
-                eventId,
-                "transaction-1",
-                null,
-                "customer could not be loaded",
-                Instant.now(),
-                MessagingCustomerService.ORIGIN_SERVICE);
+            eventId,
+            "transaction-1",
+            null,
+            "customer could not be loaded",
+            Instant.now(),
+            MessagingCustomerService.ORIGIN_SERVICE);
 
     producer.publish(event);
 
@@ -59,11 +58,11 @@ class CustomerProducerTest {
     UUID eventId = UUID.randomUUID();
     PaymentMethodLoadedEvent event =
         new PaymentMethodLoadedEvent(
-                eventId,
-                "transaction-1",
-                new PaymentMethodDTO(),
-                Instant.now(),
-                MessagingCustomerService.ORIGIN_SERVICE);
+            eventId,
+            "transaction-1",
+            new PaymentMethodDTO(),
+            Instant.now(),
+            MessagingCustomerService.ORIGIN_SERVICE);
 
     producer.publish(event);
 
