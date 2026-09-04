@@ -1,0 +1,40 @@
+package net.wowdev.ecommerce.customers.messaging;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
+import java.time.Instant;
+import java.util.UUID;
+import net.wowdev.ecommerce.customers.service.MessagingCustomerService;
+import net.wowdev.ecommerce.domain.dto.OrderDTO;
+import net.wowdev.ecommerce.domain.events.OrderCreatedEvent;
+import org.junit.jupiter.api.Test;
+
+class CustomerConsumerTest {
+
+  private final MessagingCustomerService messagingCustomerService =
+      mock(MessagingCustomerService.class);
+  private final CustomerConsumer consumer = new CustomerConsumer(messagingCustomerService);
+
+  @Test
+  void delegatesOrderCreatedEvent() {
+    MessagingCustomerService service = mock(MessagingCustomerService.class);
+    CustomerConsumer consumer = new CustomerConsumer(service);
+    OrderCreatedEvent event =
+        new OrderCreatedEvent(
+            UUID.randomUUID(),
+            "transaction-1",
+            new OrderDTO(),
+            Instant.now(),
+            MessagingCustomerService.ORIGIN_SERVICE);
+
+    consumer.handle(event);
+
+    verify(service).process(event);
+  }
+
+  @Test
+  void handlesUnknownEvents() {
+    consumer.handleUnknown(new Object());
+  }
+}

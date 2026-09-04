@@ -2,7 +2,7 @@
 project_name = "customers-service"
 
 # The root package path (e.g., net.wowdev.microservices.products)
-package_name = "net.wowdev.ecommerce.cutomers"
+package_name = "net.wowdev.ecommerce.customers"
 
 # The Capitalized noun for the entity (e.g., Product)
 domain_object = "Customer"
