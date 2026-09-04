@@ -26,6 +26,6 @@ class CustomerConsumerTest {
 
     consumer.handle(event);
 
-    verify(service).handleOrderCreated(event);
+    verify(service).process(event);
   }
 }

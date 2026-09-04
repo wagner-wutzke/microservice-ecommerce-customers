@@ -6,5 +6,5 @@ public interface MessagingCustomerService {
 
     String ORIGIN_SERVICE = "CUSTOMERS-SERVICE";
 
-    void handleOrderCreated(OrderCreatedEvent event);
+    void process(OrderCreatedEvent event);
 }

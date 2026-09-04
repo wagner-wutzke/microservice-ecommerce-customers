@@ -21,7 +21,10 @@ public class CustomerConsumer {
 
   @KafkaHandler
   public void handle(OrderCreatedEvent event) {
-    log.debug(">> Processing OrderCreatedEvent:  {}", event.eventId());
-    messagingCustomerService.handleOrderCreated(event);
+    log.debug(
+        ">> Processing OrderCreatedEvent sent by {}. EventId: {}",
+        event.origin(),
+        event.eventId());
+    messagingCustomerService.process(event);
   }
 }

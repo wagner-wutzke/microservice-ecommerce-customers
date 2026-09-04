@@ -129,7 +129,7 @@ public class DefaultMessagingCustomerServiceTest {
     OrderCreatedEvent event = orderEvent(id);
     when(repository.findById(id)).thenReturn(Optional.of(entityWithPayment(id)));
 
-    service.handleOrderCreated(event);
+    service.process(event);
 
     ArgumentCaptor<PaymentMethodLoadedEvent> paymentEvent =
         ArgumentCaptor.forClass(PaymentMethodLoadedEvent.class);
@@ -147,7 +147,7 @@ public class DefaultMessagingCustomerServiceTest {
     when(repository.findById(id)).thenReturn(Optional.empty());
     OrderCreatedEvent event = orderEvent(id);
 
-    service.handleOrderCreated(event);
+    service.process(event);
 
     ArgumentCaptor<CustomerLoadingFailedEvent> failure =
         ArgumentCaptor.forClass(CustomerLoadingFailedEvent.class);
@@ -160,7 +160,7 @@ public class DefaultMessagingCustomerServiceTest {
   void publishesFailureWhenCustomerHasNoPaymentMethods() {
     when(repository.findById(id)).thenReturn(Optional.of(entity(id, "Ada")));
 
-    service.handleOrderCreated(orderEvent(id));
+    service.process(orderEvent(id));
 
     verify(producer).publish(any(CustomerLoadingFailedEvent.class));
   }

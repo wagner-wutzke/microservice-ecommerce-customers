@@ -96,7 +96,6 @@ public class KafkaConfig {
     final var factory = new ConcurrentKafkaListenerContainerFactory<String, Object>();
     factory.setConsumerFactory(orderConsumerFactory);
     factory.setConcurrency(3);
-
     factory.setCommonErrorHandler(
         new DefaultErrorHandler(
             new DeadLetterPublishingRecoverer(kafkaTemplate), new FixedBackOff(2000L, retries)));
