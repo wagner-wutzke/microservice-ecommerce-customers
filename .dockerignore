@@ -1,0 +1,13 @@
+.codex
+.idea
+data
+.git
+*.iml
+src
+target
+volumes
+.gitignore
+Dockerfile
+ecommerce-compose.yml
+pom.xml
+*.log

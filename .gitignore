@@ -1,4 +1,4 @@
 /target/**
-/data/customers-db.mv.db
-/.idea/
-/data/customers-db.trace.db
+/data/**
+/volumes/**
+/.idea/**
