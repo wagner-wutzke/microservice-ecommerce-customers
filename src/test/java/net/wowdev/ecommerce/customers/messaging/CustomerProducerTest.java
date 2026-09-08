@@ -68,20 +68,4 @@ class CustomerProducerTest {
 
     verify(template).send("customer-events", "transaction-1", event);
   }
-
-  @Test
-  void publishesOrderProcessingStartedUsingTransactionId() {
-    UUID eventId = UUID.randomUUID();
-    OrderProcessingStartedEvent event =
-        new OrderProcessingStartedEvent(
-            eventId,
-            "transaction-1",
-            new OrderDTO(),
-            Instant.now(),
-            MessagingCustomerService.ORIGIN_SERVICE);
-
-    producer.publish(event);
-
-    verify(template).send("customer-events", "transaction-1", event);
-  }
 }

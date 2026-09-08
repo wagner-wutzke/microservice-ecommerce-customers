@@ -40,9 +40,4 @@ public class CustomerProducer {
     template.send(customerEventsTopic, event.transactionId(), event);
   }
 
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
-  public void publish(OrderProcessingStartedEvent event) {
-    log.debug(">> Publishing OrderProcessingStartedEvent: {}", event.eventId());
-    template.send(customerEventsTopic, event.transactionId(), event);
-  }
 }

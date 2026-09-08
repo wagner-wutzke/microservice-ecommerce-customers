@@ -34,33 +34,32 @@ public class DefaultMessagingCustomerService implements MessagingCustomerService
                   .orElseThrow(() -> new CustomerNotFoundException(customerId)));
 
       // TODO get the Payment Method entry marked as default
-      this.publishPaymentMethodLoaded(event, customerDTO.getPaymentMethods().getFirst());
+      this.publish(event, customerDTO.getPaymentMethods().getFirst());
 
       // Do not expose payment details in the customer event.
       customerDTO.getPaymentMethods().clear();
-      this.publishCustomerLoaded(event, customerDTO);
+      this.publish(event, customerDTO);
     } catch (Exception exception) {
       log.error(
           ">> Failed loading Customer record for id {}: {}", customerId, exception.getMessage());
-      this.publishCustomerLoadingFailed(event, exception.getMessage());
+      this.publish(event, exception.getMessage());
     }
   }
 
-  protected void publishCustomerLoaded(OrderCreatedEvent event, CustomerDTO customerDTO) {
+  protected void publish(OrderCreatedEvent event, CustomerDTO customerDTO) {
     CustomerLoadedEvent customerDataLoadedEvent =
         new CustomerLoadedEvent(
             UUID.randomUUID(), event.transactionId(), customerDTO, Instant.now(), ORIGIN_SERVICE);
     customerProducer.publish(customerDataLoadedEvent);
   }
 
-  protected void publishCustomerLoadingFailed(OrderCreatedEvent event, String reason) {
+  protected void publish(OrderCreatedEvent event, String reason) {
     customerProducer.publish(
         new CustomerLoadingFailedEvent(
             UUID.randomUUID(), event.transactionId(), null, reason, Instant.now(), ORIGIN_SERVICE));
   }
 
-  protected void publishPaymentMethodLoaded(
-      OrderCreatedEvent event, PaymentMethodDTO paymentMethodDTO) {
+  protected void publish(OrderCreatedEvent event, PaymentMethodDTO paymentMethodDTO) {
     PaymentMethodLoadedEvent paymentMethodLoadedEvent =
         new PaymentMethodLoadedEvent(
             UUID.randomUUID(),
