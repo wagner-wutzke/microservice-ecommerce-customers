@@ -28,6 +28,6 @@ public class CustomerConsumer {
 
   @KafkaHandler(isDefault = true)
   public void handleUnknown(Object event) {
-    log.debug(">> Received an unmapped event of type {}", event.getClass().getSimpleName());
+    //log.debug(">> Received an unmapped event of type {}", event.getClass().getSimpleName());
   }
 }
