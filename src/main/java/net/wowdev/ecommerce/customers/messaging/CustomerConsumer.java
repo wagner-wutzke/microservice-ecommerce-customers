@@ -22,7 +22,7 @@ public class CustomerConsumer {
   @KafkaHandler
   public void handle(OrderCreated event) {
     log.debug(
-        ">> Processing OrderCreatedEvent from {}. EventId: {}", event.origin(), event.eventId());
+        ">> Processing OrderCreated event from {}. EventId: {}", event.origin(), event.eventId());
     messagingCustomerService.process(event);
   }
 
