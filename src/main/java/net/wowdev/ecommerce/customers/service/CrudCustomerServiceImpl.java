@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DefaultCrudCustomerService implements CrudCustomerService {
+public class CrudCustomerServiceImpl implements CrudCustomerService {
 
   private final CustomerRepository repository;
 

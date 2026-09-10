@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.util.UUID;
 import net.wowdev.ecommerce.customers.service.MessagingCustomerService;
 import net.wowdev.ecommerce.domain.dto.OrderDTO;
-import net.wowdev.ecommerce.domain.events.OrderCreatedEvent;
+import net.wowdev.ecommerce.domain.events.OrderCreated;
 import org.junit.jupiter.api.Test;
 
 class CustomerConsumerTest {
@@ -20,8 +20,8 @@ class CustomerConsumerTest {
   void delegatesOrderCreatedEvent() {
     MessagingCustomerService service = mock(MessagingCustomerService.class);
     CustomerConsumer consumer = new CustomerConsumer(service);
-    OrderCreatedEvent event =
-        new OrderCreatedEvent(
+    OrderCreated event =
+        new OrderCreated(
             UUID.randomUUID(),
             "transaction-1",
             new OrderDTO(),

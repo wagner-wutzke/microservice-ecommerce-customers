@@ -9,10 +9,9 @@ import net.wowdev.ecommerce.customers.service.MessagingCustomerService;
 import net.wowdev.ecommerce.domain.dto.CustomerDTO;
 import net.wowdev.ecommerce.domain.dto.OrderDTO;
 import net.wowdev.ecommerce.domain.dto.PaymentMethodDTO;
-import net.wowdev.ecommerce.domain.events.CustomerLoadedEvent;
-import net.wowdev.ecommerce.domain.events.CustomerLoadingFailedEvent;
-import net.wowdev.ecommerce.domain.events.OrderProcessingStartedEvent;
-import net.wowdev.ecommerce.domain.events.PaymentMethodLoadedEvent;
+import net.wowdev.ecommerce.domain.events.CustomerReplicationCompleted;
+import net.wowdev.ecommerce.domain.events.CustomerReplicationFailed;
+import net.wowdev.ecommerce.domain.events.PaymentMethodReplicationCompleted;
 import org.junit.jupiter.api.Test;
 import org.springframework.kafka.core.KafkaTemplate;
 
@@ -23,10 +22,11 @@ class CustomerProducerTest {
   @Test
   void publishesLoadedCustomerUsingTransactionId() {
     UUID eventId = UUID.randomUUID();
-    CustomerLoadedEvent event =
-        new CustomerLoadedEvent(
+    CustomerReplicationCompleted event =
+        new CustomerReplicationCompleted(
             eventId,
             "transaction-1",
+            new OrderDTO(),
             new CustomerDTO(),
             Instant.now(),
             MessagingCustomerService.ORIGIN_SERVICE);
@@ -39,8 +39,8 @@ class CustomerProducerTest {
   @Test
   void publishesFailedCustomerUsingTransactionId() {
     UUID eventId = UUID.randomUUID();
-    CustomerLoadingFailedEvent event =
-        new CustomerLoadingFailedEvent(
+    CustomerReplicationFailed event =
+        new CustomerReplicationFailed(
             eventId,
             "transaction-1",
             null,
@@ -56,8 +56,8 @@ class CustomerProducerTest {
   @Test
   void publishesPaymentMethodUsingTransactionId() {
     UUID eventId = UUID.randomUUID();
-    PaymentMethodLoadedEvent event =
-        new PaymentMethodLoadedEvent(
+    PaymentMethodReplicationCompleted event =
+        new PaymentMethodReplicationCompleted(
             eventId,
             "transaction-1",
             new PaymentMethodDTO(),

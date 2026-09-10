@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DefaultMessagingCustomerService implements MessagingCustomerService {
+public class MessagingCustomerServiceImpl implements MessagingCustomerService {
 
   private final CustomerProducer customerProducer;
 
@@ -24,7 +24,7 @@ public class DefaultMessagingCustomerService implements MessagingCustomerService
 
   @Transactional
   @Override
-  public void process(OrderCreatedEvent event) {
+  public void process(OrderCreated event) {
     UUID customerId = event.orderDTO().getCustomerId();
     try {
       CustomerDTO customerDTO =
@@ -46,22 +46,27 @@ public class DefaultMessagingCustomerService implements MessagingCustomerService
     }
   }
 
-  protected void publish(OrderCreatedEvent event, CustomerDTO customerDTO) {
-    CustomerLoadedEvent customerDataLoadedEvent =
-        new CustomerLoadedEvent(
-            UUID.randomUUID(), event.transactionId(), customerDTO, Instant.now(), ORIGIN_SERVICE);
-    customerProducer.publish(customerDataLoadedEvent);
+  protected void publish(OrderCreated event, CustomerDTO customerDTO) {
+    CustomerReplicationCompleted dataReplicationEvent =
+        new CustomerReplicationCompleted(
+            UUID.randomUUID(),
+            event.transactionId(),
+            event.orderDTO(),
+            customerDTO,
+            Instant.now(),
+            ORIGIN_SERVICE);
+    customerProducer.publish(dataReplicationEvent);
   }
 
-  protected void publish(OrderCreatedEvent event, String reason) {
+  protected void publish(OrderCreated event, String reason) {
     customerProducer.publish(
-        new CustomerLoadingFailedEvent(
+        new CustomerReplicationFailed(
             UUID.randomUUID(), event.transactionId(), null, reason, Instant.now(), ORIGIN_SERVICE));
   }
 
-  protected void publish(OrderCreatedEvent event, PaymentMethodDTO paymentMethodDTO) {
-    PaymentMethodLoadedEvent paymentMethodLoadedEvent =
-        new PaymentMethodLoadedEvent(
+  protected void publish(OrderCreated event, PaymentMethodDTO paymentMethodDTO) {
+    PaymentMethodReplicationCompleted paymentMethodLoadedEvent =
+        new PaymentMethodReplicationCompleted(
             UUID.randomUUID(),
             event.transactionId(),
             paymentMethodDTO,

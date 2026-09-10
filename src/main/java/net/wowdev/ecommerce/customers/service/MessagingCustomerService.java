@@ -1,10 +1,10 @@
 package net.wowdev.ecommerce.customers.service;
 
-import net.wowdev.ecommerce.domain.events.OrderCreatedEvent;
+import net.wowdev.ecommerce.domain.events.OrderCreated;
 
 public interface MessagingCustomerService {
 
   String ORIGIN_SERVICE = "CUSTOMERS-SERVICE";
 
-  void process(OrderCreatedEvent event);
+  void process(OrderCreated event);
 }

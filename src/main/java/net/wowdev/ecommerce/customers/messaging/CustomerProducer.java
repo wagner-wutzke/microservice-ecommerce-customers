@@ -13,31 +13,31 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class CustomerProducer {
 
   private final KafkaTemplate<String, Object> template;
-  private final String customerEventsTopic;
+  private final String topic;
 
   public CustomerProducer(
       final KafkaTemplate<String, Object> template,
-      @Value("${app.kafka.customers-topic}") final String customerEventsTopic) {
+      @Value("${app.kafka.customers-topic}") final String topic) {
     this.template = template;
-    this.customerEventsTopic = customerEventsTopic;
+    this.topic = topic;
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
-  public void publish(final CustomerLoadedEvent event) {
-    log.debug(">> Publishing CustomerLoadedEvent: {}", event.eventId());
-    template.send(customerEventsTopic, event.transactionId(), event);
+  public void publish(final CustomerReplicationCompleted event) {
+    log.debug(">> Publishing CustomerReplicationCompleted: {}", event.eventId());
+    template.send(topic, event.transactionId(), event);
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
-  public void publish(final CustomerLoadingFailedEvent event) {
-    log.debug(">> Publishing CustomerLoadingFailedEvent: {}", event.eventId());
-    template.send(customerEventsTopic, event.transactionId(), event);
+  public void publish(final CustomerReplicationFailed event) {
+    log.debug(">> Publishing CustomerReplicationFailed: {}", event.eventId());
+    template.send(topic, event.transactionId(), event);
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
-  public void publish(final PaymentMethodLoadedEvent event) {
-    log.debug(">> Publishing PaymentMethodLoadedEvent: {}", event.eventId());
-    template.send(customerEventsTopic, event.transactionId(), event);
+  public void publish(final PaymentMethodReplicationCompleted event) {
+    log.debug(">> Publishing PaymentMethodReplicationCompleted: {}", event.eventId());
+    template.send(topic, event.transactionId(), event);
   }
 
 }

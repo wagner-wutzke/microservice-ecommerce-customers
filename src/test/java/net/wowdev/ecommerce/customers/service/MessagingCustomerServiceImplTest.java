@@ -17,17 +17,17 @@ import net.wowdev.ecommerce.domain.dto.PaymentMethodDTO;
 import net.wowdev.ecommerce.domain.entity.CustomerEntity;
 import net.wowdev.ecommerce.domain.entity.PaymentMethodEntity;
 import net.wowdev.ecommerce.domain.enums.CustomerStatus;
-import net.wowdev.ecommerce.domain.events.CustomerLoadedEvent;
-import net.wowdev.ecommerce.domain.events.CustomerLoadingFailedEvent;
-import net.wowdev.ecommerce.domain.events.OrderCreatedEvent;
-import net.wowdev.ecommerce.domain.events.PaymentMethodLoadedEvent;
+import net.wowdev.ecommerce.domain.events.CustomerReplicationCompleted;
+import net.wowdev.ecommerce.domain.events.CustomerReplicationFailed;
+import net.wowdev.ecommerce.domain.events.OrderCreated;
+import net.wowdev.ecommerce.domain.events.PaymentMethodReplicationCompleted;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-public class DefaultMessagingCustomerServiceTest {
+public class MessagingCustomerServiceImplTest {
 
   @Mock private CustomerRepository repository;
 
@@ -102,10 +102,10 @@ public class DefaultMessagingCustomerServiceTest {
         Instant.now());
   }
 
-  private static OrderCreatedEvent orderEvent(UUID customerId) {
+  private static OrderCreated orderEvent(UUID customerId) {
     OrderDTO order = new OrderDTO();
     order.setCustomerId(customerId);
-    return new OrderCreatedEvent(
+    return new OrderCreated(
         UUID.randomUUID(),
         "transaction-1",
         order,
@@ -116,7 +116,7 @@ public class DefaultMessagingCustomerServiceTest {
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    service = new DefaultMessagingCustomerService(producer, repository);
+    service = new MessagingCustomerServiceImpl(producer, repository);
     id = UUID.randomUUID();
   }
 
@@ -125,31 +125,31 @@ public class DefaultMessagingCustomerServiceTest {
     PaymentMethodDTO payment = new PaymentMethodDTO();
     CustomerDTO customer = dto(id, "Ada");
     customer.setPaymentMethods(List.of(payment));
-    OrderCreatedEvent event = orderEvent(id);
+    OrderCreated event = orderEvent(id);
     when(repository.findById(id)).thenReturn(Optional.of(entityWithPayment(id)));
 
     service.process(event);
 
-    ArgumentCaptor<PaymentMethodLoadedEvent> paymentEvent =
-        ArgumentCaptor.forClass(PaymentMethodLoadedEvent.class);
-    ArgumentCaptor<CustomerLoadedEvent> customerEvent =
-        ArgumentCaptor.forClass(CustomerLoadedEvent.class);
+    ArgumentCaptor<PaymentMethodReplicationCompleted> paymentEvent =
+        ArgumentCaptor.forClass(PaymentMethodReplicationCompleted.class);
+    ArgumentCaptor<CustomerReplicationCompleted> customerEvent =
+        ArgumentCaptor.forClass(CustomerReplicationCompleted.class);
     verify(producer).publish(paymentEvent.capture());
     verify(producer).publish(customerEvent.capture());
     assertThat(paymentEvent.getValue().paymentMethodDTO()).isNotNull();
-    CustomerLoadedEvent loaded = customerEvent.getValue();
+    CustomerReplicationCompleted loaded = customerEvent.getValue();
     assertThat(loaded.customerDTO().getPaymentMethods()).isEmpty();
   }
 
   @Test
   void publishesFailureWhenCustomerCannotBeLoaded() {
     when(repository.findById(id)).thenReturn(Optional.empty());
-    OrderCreatedEvent event = orderEvent(id);
+    OrderCreated event = orderEvent(id);
 
     service.process(event);
 
-    ArgumentCaptor<CustomerLoadingFailedEvent> failure =
-        ArgumentCaptor.forClass(CustomerLoadingFailedEvent.class);
+    ArgumentCaptor<CustomerReplicationFailed> failure =
+        ArgumentCaptor.forClass(CustomerReplicationFailed.class);
     verify(producer).publish(failure.capture());
     assertThat(failure.getValue().transactionId()).isEqualTo("transaction-1");
     assertThat(failure.getValue().reason()).isEqualTo("Customer not found: " + id);
@@ -161,6 +161,6 @@ public class DefaultMessagingCustomerServiceTest {
 
     service.process(orderEvent(id));
 
-    verify(producer).publish(any(CustomerLoadingFailedEvent.class));
+    verify(producer).publish(any(CustomerReplicationFailed.class));
   }
 }

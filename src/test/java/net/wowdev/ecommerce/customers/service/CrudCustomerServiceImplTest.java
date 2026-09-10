@@ -29,10 +29,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
-class DefaultCrudCustomerServiceTest {
+class CrudCustomerServiceImplTest {
   @Mock private CustomerRepository repository;
   @Mock private CustomerProducer producer;
-  private DefaultCrudCustomerService service;
+  private CrudCustomerServiceImpl service;
   private UUID id;
 
   private static CustomerDTO dto(UUID customerId, String firstName) {
@@ -100,10 +100,10 @@ class DefaultCrudCustomerServiceTest {
         Instant.now());
   }
 
-  private static OrderCreatedEvent orderEvent(UUID customerId) {
+  private static OrderCreated orderEvent(UUID customerId) {
     OrderDTO order = new OrderDTO();
     order.setCustomerId(customerId);
-    return new OrderCreatedEvent(
+    return new OrderCreated(
         UUID.randomUUID(),
         "transaction-1",
         order,
@@ -114,7 +114,7 @@ class DefaultCrudCustomerServiceTest {
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    service = new DefaultCrudCustomerService(repository);
+    service = new CrudCustomerServiceImpl(repository);
     id = UUID.randomUUID();
   }
 

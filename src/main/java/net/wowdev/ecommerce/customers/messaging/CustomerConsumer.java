@@ -3,7 +3,7 @@ package net.wowdev.ecommerce.customers.messaging;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.wowdev.ecommerce.customers.service.MessagingCustomerService;
-import net.wowdev.ecommerce.domain.events.OrderCreatedEvent;
+import net.wowdev.ecommerce.domain.events.OrderCreated;
 import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -20,7 +20,7 @@ public class CustomerConsumer {
   private final MessagingCustomerService messagingCustomerService;
 
   @KafkaHandler
-  public void handle(OrderCreatedEvent event) {
+  public void handle(OrderCreated event) {
     log.debug(
         ">> Processing OrderCreatedEvent from {}. EventId: {}", event.origin(), event.eventId());
     messagingCustomerService.process(event);
