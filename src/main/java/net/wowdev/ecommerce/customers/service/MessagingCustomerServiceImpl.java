@@ -34,19 +34,19 @@ public class MessagingCustomerServiceImpl implements MessagingCustomerService {
                   .orElseThrow(() -> new CustomerNotFoundException(customerId)));
 
       // TODO get the Payment Method entry marked as default
-      this.publish(event, customerDTO.getPaymentMethods().getFirst());
+      this.publishPaymentMethodReplicationCompleted(event, customerDTO.getPaymentMethods().getFirst());
 
       // Do not expose payment details in the customer event.
       customerDTO.getPaymentMethods().clear();
-      this.publish(event, customerDTO);
+      this.publishCustomerReplicationCompleted(event, customerDTO);
     } catch (Exception exception) {
       log.error(
           ">> Failed loading Customer record for id {}: {}", customerId, exception.getMessage());
-      this.publish(event, exception.getMessage());
+      this.publishCustomerReplicationFailed(event, exception.getMessage());
     }
   }
 
-  protected void publish(OrderCreated event, CustomerDTO customerDTO) {
+  protected void publishCustomerReplicationCompleted(OrderCreated event, CustomerDTO customerDTO) {
     CustomerReplicationCompleted dataReplicationEvent =
         new CustomerReplicationCompleted(
             UUID.randomUUID(),
@@ -58,13 +58,13 @@ public class MessagingCustomerServiceImpl implements MessagingCustomerService {
     customerProducer.publish(dataReplicationEvent);
   }
 
-  protected void publish(OrderCreated event, String reason) {
+  protected void publishCustomerReplicationFailed(OrderCreated event, String reason) {
     customerProducer.publish(
         new CustomerReplicationFailed(
             UUID.randomUUID(), event.transactionId(), null, reason, Instant.now(), ORIGIN_SERVICE));
   }
 
-  protected void publish(OrderCreated event, PaymentMethodDTO paymentMethodDTO) {
+  protected void publishPaymentMethodReplicationCompleted(OrderCreated event, PaymentMethodDTO paymentMethodDTO) {
     PaymentMethodReplicationCompleted paymentMethodLoadedEvent =
         new PaymentMethodReplicationCompleted(
             UUID.randomUUID(),
