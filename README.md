@@ -1,4 +1,4 @@
-# microservice-ecommerce-customers
+# E-commerce Customers Service
 
 ## Introduction
 This is a Spring Boot microservice project for the **eCommerce Customers Backend Service**.\

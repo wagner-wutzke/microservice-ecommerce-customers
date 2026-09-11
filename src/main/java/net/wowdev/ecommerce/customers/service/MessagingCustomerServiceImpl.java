@@ -24,8 +24,8 @@ public class MessagingCustomerServiceImpl implements MessagingCustomerService {
 
   @Transactional
   @Override
-  public void process(OrderCreated event) {
-    UUID customerId = event.orderDTO().getCustomerId();
+  public void process(CustomerReplicationRequested event) {
+    UUID customerId = event.customerDTO().getId();
     try {
       CustomerDTO customerDTO =
           CustomerMapper.toDto(
@@ -34,10 +34,14 @@ public class MessagingCustomerServiceImpl implements MessagingCustomerService {
                   .orElseThrow(() -> new CustomerNotFoundException(customerId)));
 
       // TODO get the Payment Method entry marked as default
-      this.publishPaymentMethodReplicationCompleted(event, customerDTO.getPaymentMethods().getFirst());
+      // notify interested services that payment method data has been loaded
+      this.publishPaymentMethodReplicationCompleted(
+          event, customerDTO.getPaymentMethods().getFirst());
 
       // Do not expose payment details in the customer event.
       customerDTO.getPaymentMethods().clear();
+
+      // notify interested services that customer data has been loaded
       this.publishCustomerReplicationCompleted(event, customerDTO);
     } catch (Exception exception) {
       log.error(
@@ -46,25 +50,27 @@ public class MessagingCustomerServiceImpl implements MessagingCustomerService {
     }
   }
 
-  protected void publishCustomerReplicationCompleted(OrderCreated event, CustomerDTO customerDTO) {
+  protected void publishCustomerReplicationCompleted(
+      CustomerReplicationRequested event, CustomerDTO customerDTO) {
     CustomerReplicationCompleted dataReplicationEvent =
         new CustomerReplicationCompleted(
             UUID.randomUUID(),
             event.transactionId(),
-            event.orderDTO(),
-            customerDTO,
+            event.customerDTO(),
             Instant.now(),
             ORIGIN_SERVICE);
     customerProducer.publish(dataReplicationEvent);
   }
 
-  protected void publishCustomerReplicationFailed(OrderCreated event, String reason) {
+  protected void publishCustomerReplicationFailed(
+      CustomerReplicationRequested event, String reason) {
     customerProducer.publish(
         new CustomerReplicationFailed(
             UUID.randomUUID(), event.transactionId(), null, reason, Instant.now(), ORIGIN_SERVICE));
   }
 
-  protected void publishPaymentMethodReplicationCompleted(OrderCreated event, PaymentMethodDTO paymentMethodDTO) {
+  protected void publishPaymentMethodReplicationCompleted(
+      CustomerReplicationRequested event, PaymentMethodDTO paymentMethodDTO) {
     PaymentMethodReplicationCompleted paymentMethodLoadedEvent =
         new PaymentMethodReplicationCompleted(
             UUID.randomUUID(),

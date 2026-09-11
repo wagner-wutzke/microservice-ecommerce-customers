@@ -12,13 +12,13 @@ import java.util.UUID;
 import net.wowdev.ecommerce.customers.messaging.CustomerProducer;
 import net.wowdev.ecommerce.customers.repository.CustomerRepository;
 import net.wowdev.ecommerce.domain.dto.CustomerDTO;
-import net.wowdev.ecommerce.domain.dto.OrderDTO;
 import net.wowdev.ecommerce.domain.dto.PaymentMethodDTO;
 import net.wowdev.ecommerce.domain.entity.CustomerEntity;
 import net.wowdev.ecommerce.domain.entity.PaymentMethodEntity;
 import net.wowdev.ecommerce.domain.enums.CustomerStatus;
 import net.wowdev.ecommerce.domain.events.CustomerReplicationCompleted;
 import net.wowdev.ecommerce.domain.events.CustomerReplicationFailed;
+import net.wowdev.ecommerce.domain.events.CustomerReplicationRequested;
 import net.wowdev.ecommerce.domain.events.OrderCreated;
 import net.wowdev.ecommerce.domain.events.PaymentMethodReplicationCompleted;
 import org.junit.jupiter.api.BeforeEach;
@@ -102,13 +102,13 @@ public class MessagingCustomerServiceImplTest {
         Instant.now());
   }
 
-  private static OrderCreated orderEvent(UUID customerId) {
-    OrderDTO order = new OrderDTO();
-    order.setCustomerId(customerId);
-    return new OrderCreated(
+  private static CustomerReplicationRequested cutomerReplicationEvent(UUID customerId) {
+    CustomerDTO customer = new CustomerDTO();
+    customer.setId(customerId);
+    return new CustomerReplicationRequested(
         UUID.randomUUID(),
         "transaction-1",
-        order,
+        customer,
         Instant.now(),
         MessagingCustomerService.ORIGIN_SERVICE);
   }
@@ -125,7 +125,7 @@ public class MessagingCustomerServiceImplTest {
     PaymentMethodDTO payment = new PaymentMethodDTO();
     CustomerDTO customer = dto(id, "Ada");
     customer.setPaymentMethods(List.of(payment));
-    OrderCreated event = orderEvent(id);
+    CustomerReplicationRequested event = cutomerReplicationEvent(id);
     when(repository.findById(id)).thenReturn(Optional.of(entityWithPayment(id)));
 
     service.process(event);
@@ -144,7 +144,7 @@ public class MessagingCustomerServiceImplTest {
   @Test
   void publishesFailureWhenCustomerCannotBeLoaded() {
     when(repository.findById(id)).thenReturn(Optional.empty());
-    OrderCreated event = orderEvent(id);
+    CustomerReplicationRequested event = cutomerReplicationEvent(id);
 
     service.process(event);
 
@@ -159,7 +159,7 @@ public class MessagingCustomerServiceImplTest {
   void publishesFailureWhenCustomerHasNoPaymentMethods() {
     when(repository.findById(id)).thenReturn(Optional.of(entity(id, "Ada")));
 
-    service.process(orderEvent(id));
+    service.process(cutomerReplicationEvent(id));
 
     verify(producer).publish(any(CustomerReplicationFailed.class));
   }

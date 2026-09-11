@@ -26,7 +26,6 @@ class CustomerProducerTest {
         new CustomerReplicationCompleted(
             eventId,
             "transaction-1",
-            new OrderDTO(),
             new CustomerDTO(),
             Instant.now(),
             MessagingCustomerService.ORIGIN_SERVICE);

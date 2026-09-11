@@ -22,19 +22,16 @@ public class CustomerProducer {
     this.topic = topic;
   }
 
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void publish(final CustomerReplicationCompleted event) {
     log.debug(">> Publishing CustomerReplicationCompleted event: {}", event.eventId());
     template.send(topic, event.transactionId(), event);
   }
 
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void publish(final CustomerReplicationFailed event) {
     log.debug(">> Publishing CustomerReplicationFailed event: {}", event.eventId());
     template.send(topic, event.transactionId(), event);
   }
 
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void publish(final PaymentMethodReplicationCompleted event) {
     log.debug(">> Publishing PaymentMethodReplicationCompleted event: {}", event.eventId());
     template.send(topic, event.transactionId(), event);
