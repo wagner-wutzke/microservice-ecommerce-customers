@@ -56,7 +56,7 @@ public class MessagingCustomerServiceImpl implements MessagingCustomerService {
         new CustomerReplicationCompleted(
             UUID.randomUUID(),
             event.transactionId(),
-            event.customerDTO(),
+            customerDTO,
             Instant.now(),
             ORIGIN_SERVICE);
     customerProducer.publish(dataReplicationEvent);
